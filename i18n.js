@@ -181,7 +181,7 @@ var i18n = (function () {
     filterChangeHint:    { zh: '点击更换照片',   en: 'Click to change photo' },
 
     /* 个人中心 */
-    profileName:        { zh: 'PrismDen',                          en: 'PrismDen' },
+    profileName:        { zh: 'Young__Yang',                      en: 'Young__Yang' },
     profileBio:         { zh: '棱镜降噪 · 哈希加速双边滤波',     en: 'PrismDen · Hash-Accelerated Denoising' },
     statTitle:           { zh: '使用统计',       en: 'Statistics' },
     statDenoise:        { zh: '图像降噪',       en: 'Denoise' },
@@ -210,7 +210,7 @@ var i18n = (function () {
     aboutLabelVersion:   { zh: '版本',           en: 'Version' },
     aboutAuthor:        { zh: 'Young__Yang',                     en: 'Young__Yang' },
     aboutLabelVersion:   { zh: '版本',           en: 'Version' },
-    aboutVersion:       { zh: 'v1.0.0',                         en: 'v1.0.0' },
+    aboutVersion:       { zh: 'v1.1.3',                         en: 'v1.1.3' },
     dataTitle:           { zh: '数据管理',       en: 'Data' },
     btnClearData:        { zh: '清除本地使用统计', en: 'Clear Usage Statistics' },
     confirmClear:       { zh: '确定要清除所有本地数据吗？\n（包括使用统计，不影响主题和震动设置）', en: 'Clear all local data?\n(Includes usage statistics. Theme and haptic settings are kept.)' },
