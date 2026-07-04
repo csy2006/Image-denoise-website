@@ -1,965 +1,380 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <!-- iOS Safari 兼容 -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="format-detection" content="telephone=no" />
-  <!-- 微信 TBS / X5 内核兼容 -->
-  <meta name="x5-orientation" content="portrait" />
-  <meta name="x5-fullscreen" content="true" />
-  <meta name="x5-page-mode" content="app" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="renderer" content="webkit" />
-  <!-- 通知 iOS Safari 支持深浅色模式（触发 prefers-color-scheme） -->
-  <meta name="color-scheme" content="light dark" />
-  <title>PrismDen — 图像降噪</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="filter.css" />
-  <link rel="stylesheet" href="ticket.css" />
-  <link rel="stylesheet" href="profile.css" />
-  <link rel="icon" href="./002.jpg" type="image/x-icon">
-  <!-- 同步检测系统主题（在 CSS 加载前执行，避免闪白） -->
-  <script>
-    (function() {
-      // 用户手动设置过主题 → 跳过自动检测
-      if (localStorage.getItem('theme')) return;
-      // 兼容 iOS Safari + 微信：优先 matchMedia，fallback 用 color-scheme 媒体查询
-      var mq = '(prefers-color-scheme: dark)';
-      var prefersDark = false;
-      try { prefersDark = window.matchMedia(mq).matches; } catch(e) {}
-      // iOS 微信 X5 内核不支持 matchMedia → 用 CSS env() 检测（Safari 支持）
-      // 最简方案：直接设 data-theme，让 CSS 里的 @media 决定实际颜色
-      // 但我们需要在这里就决定，所以用 getComputedStyle 不可行
-      // 最终方案：先设一个默认值，CSS 加载后会覆盖
-      if (prefersDark) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        sessionStorage.setItem('_themeAuto', '1');
+/* ==================== i18n 多语言系统 ==================== */
+/**
+ * i18n.js — PrismDen 中英双语切换
+ * 使用方式：
+ *   i18n.setLang('en')  // 切换为英文
+ *   i18n.setLang('zh')  // 切换为中文
+ *   i18n.t('key')        // 在 JS 中获取翻译文本（toast 等动态文本）
+ *
+ * HTML 中给需要翻译的元素加 data-i18n="key"
+ *   纯文本元素：      <span data-i18n="key">中文</span>
+ *   按钮（仅文本）：  <button data-i18n="key">中文</button>
+ *   含 SVG 的元素： 把文本部分包在 <span data-i18n="key"> 中
+ */
+
+var i18n = (function () {
+
+  'use strict';
+
+  var currentLang = 'zh';
+
+  /* —— 翻译字典 —— */
+  var dict = {
+
+    /* 欢迎遮罩 */
+    welcomeSubtitle:    { zh: '棱镜降噪 · 图像降噪处理平台',       en: 'PrismDen · Image Denoising Platform' },
+    welcomeHint:        { zh: '点击任意位置进入',                   en: 'Click anywhere to enter' },
+
+    /* 导航栏 */
+    navHome:            { zh: '首页',           en: 'Home' },
+    navFeatures:        { zh: '核心特性',       en: 'Features' },
+    navGuide:           { zh: '参数指南',       en: 'Guide' },
+    navUpload:           { zh: '图像降噪',       en: 'Denoise' },
+    navResult:           { zh: '降噪结果',       en: 'Result' },
+    navTicket:           { zh: '旅行票根',       en: 'Ticket' },
+    navFilter:           { zh: '创意滤镜',       en: 'Filters' },
+    navProfile:          { zh: '个人中心',       en: 'Profile' },
+    statusConnecting:    { zh: '等待后端连接...', en: 'Connecting...' },
+    statusConnected:     { zh: '后端已连接',     en: 'Connected' },
+    statusError:         { zh: '连接失败',       en: 'Connection failed' },
+    brandTag:            { zh: ' · 棱镜降噪',   en: ' · PrismDen' },
+
+    /* 首页 */
+    heroKanji:         { zh: 'Image Processing · Young__Yang', en: 'Image Processing · Young__Yang' },
+    heroSubtitle:       { zh: 'Hash-Accelerated Bilateral Filtering<br>哈希加速双边滤波图像降噪项目', en: 'Hash-Accelerated Bilateral Filtering<br>Image Denoising Project' },
+    btnDenoise:        { zh: '即刻降噪',       en: 'Start Denoising' },
+    btnFilter:           { zh: '创意滤镜',       en: 'Creative Filters' },
+    themeLight:          { zh: '浅色',           en: 'Light' },
+    themeDark:           { zh: '深色',           en: 'Dark' },
+
+    /* 核心特性 */
+    featBilateral:      { zh: '双边滤波算法',   en: 'Bilateral Filter' },
+    featBilateralDesc:  { zh: '空间权重与色彩权重联合保边去噪，精准区分噪声与细节边缘，避免传统高斯滤波导致的模糊', en: 'Joint spatial-color weighting for edge-preserving denoising. Accurately separates noise from detail edges, avoiding blurring caused by traditional Gaussian filters.' },
+    featDS:              { zh: '数据结构',       en: 'Data Structures' },
+    featDSDesc:          { zh: '综合运用哈希表、链表、大顶堆、队列等数据结构来管理处理流水线', en: 'HashMap, LinkedList, MaxHeap, and Queue to manage the processing pipeline.' },
+    featCPP:             { zh: 'C++ 后端',      en: 'C++ Backend' },
+    featCPPDesc:         { zh: '原生 C++ HTTP 服务器，LUT 加速双边滤波，Catmull-Rom 双三次上采样，Unsharp Mask 锐化', en: 'Native C++ HTTP server, LUT-accelerated bilateral filter, Catmull-Rom bicubic upsampling, Unsharp Mask sharpening.' },
+    featFormat:          { zh: '多格式支持',     en: 'Multi-Format' },
+    featFormatDesc:      { zh: '支持 PNG、JPG、JPEG、RAW、BMP、TIFF、WebP 等主流图片格式输入，输出 PNG/JPEG/WebP', en: 'Input: PNG, JPG, JPEG, RAW, BMP, TIFF, WebP. Output: PNG, JPEG, WebP.' },
+    btnViewGuide:        { zh: '查看参数指南 →',  en: 'View Guide →' },
+
+    /* 参数指南 */
+    guideIntro:          { zh: '调整降噪参数前，先了解两个核心参数的含义与推荐取值，助你快速找到最佳效果', en: 'Before adjusting denoising parameters, learn the meaning and recommended values of the two core parameters to find the best result quickly.' },
+    guideSpace:          { zh: '空间半径',       en: 'Spatial Radius' },
+    guideSpaceDesc:      { zh: '控制滤波器的<span style="color:var(--orange); font-weight:600;">空间作用范围</span>。数值越大，参与计算的像素距离越远，降噪力度越强，但细节也可能被过度平滑。', en: 'Controls the <span style="color:var(--orange); font-weight:600;">spatial range</span> of the filter. Larger values increase denoising strength but may over-smooth details.' },
+    guideRange:          { zh: '颜色阈值',       en: 'Range Threshold' },
+    guideRangeDesc:      { zh: '控制<span style="color:var(--orange); font-weight:600;">颜色相似度阈值</span>。数值越小，颜色边界保护越强（边缘越清晰）；数值越大，跨边缘平滑越激进。', en: 'Controls the <span style="color:var(--orange); font-weight:600;">color similarity threshold</span>. Smaller values preserve edges better; larger values smooth more aggressively.' },
+    sigmaSLight:        { zh: '1 − 3',         en: '1 − 3' },
+    sigmaSLightDesc:    { zh: '轻微降噪，保留最多细节', en: 'Light denoising, most detail preserved' },
+    sigmaSRec:          { zh: '4 − 7（推荐）',  en: '4 − 7 (Recommended)' },
+    sigmaSRecDesc:      { zh: '日常使用，细节与降噪平衡', en: 'Daily use, balance of detail and denoising' },
+    sigmaSStrong:       { zh: '8 − 15',        en: '8 − 15' },
+    sigmaSStrongDesc:   { zh: '强力降噪，适合高噪声风景照', en: 'Strong denoising, suitable for noisy landscapes' },
+    sigmaRLow:          { zh: '1 − 15',        en: '1 − 15' },
+    sigmaRLowDesc:      { zh: '强保边，适合人像、建筑', en: 'Strong edge preservation, for portraits/buildings' },
+    sigmaRRec:          { zh: '16 − 40（推荐）', en: '16 − 40 (Recommended)' },
+    sigmaRRecDesc:      { zh: '平衡保边与平滑，默认 25', en: 'Balanced, default 25' },
+    sigmaRHigh:         { zh: '41 − 100',      en: '41 − 100' },
+    sigmaRHighDesc:     { zh: '平滑优先，适合天空、水面等', en: 'Smoothing priority, for sky/water' },
+    btnGoParams:         { zh: '去调整参数 →',   en: 'Adjust Parameters →' },
+
+    /* 上传处理 */
+    uploadTitle:         { zh: '导入图片',       en: 'Import Image' },
+    uploadHint:          { zh: '拖拽或点击导入图片', en: 'Drag or click to import' },
+    uploadFormat:        { zh: '支持 PNG · JPG · JPEG · RAW · BMP · TIFF · WebP', en: 'Supports PNG · JPG · JPEG · RAW · BMP · TIFF · WebP' },
+    btnChangePhoto:     { zh: '更换照片',       en: 'Change Photo' },
+    btnRemovePhoto:     { zh: '移除照片',       en: 'Remove Photo' },
+    metaName:            { zh: '文件名',         en: 'File Name' },
+    metaFormat:          { zh: '格式',           en: 'Format' },
+    metaSize:            { zh: '大小',           en: 'Size' },
+    metaCamera:          { zh: '相机参数',       en: 'Camera Info' },
+    metaMake:            { zh: '相机制造商',     en: 'Camera Make' },
+    metaModel:           { zh: '相机型号',       en: 'Camera Model' },
+    metaAperture:       { zh: '光圈',           en: 'Aperture' },
+    metaShutter:        { zh: '快门',           en: 'Shutter' },
+    metaISO:             { zh: 'ISO',             en: 'ISO' },
+    metaFocal:           { zh: '焦距',           en: 'Focal Length' },
+    paramTitle:          { zh: '降噪参数',       en: 'Denoising Parameters' },
+    btnBackToGuide:     { zh: '← 参数指南',    en: '← Guide' },
+    sigmaSLabel:        { zh: '空间半径',       en: 'Spatial Radius' },
+    sigmaSScaleL:       { zh: '1 — 轻微',     en: '1 — Light' },
+    sigmaSScaleR:       { zh: '15 — 强力',    en: '15 — Strong' },
+    sigmaRLabel:        { zh: '颜色阈值',       en: 'Range Threshold' },
+    sigmaRScaleL:       { zh: '1 — 保边',    en: '1 — Edge' },
+    sigmaRScaleR:        { zh: '100 — 平滑',   en: '100 — Smooth' },
+    modeBilateral:      { zh: '彩色双边',       en: 'Color Bilateral' },
+    modeGrayscale:      { zh: '灰度 Y 通道',   en: 'Grayscale Y' },
+    btnStartDenoise:    { zh: '开始图像降噪',   en: 'Start Denoising' },
+    processing:          { zh: '处理中...',       en: 'Processing...' },
+
+    /* 降噪结果 */
+    emptyTitle:          { zh: '暂无处理结果',   en: 'No Result Yet' },
+    emptyDesc:           { zh: '请先前往上传处理页面导入图片并进行降噪处理', en: 'Please import an image and denoise it first.' },
+    btnGoUpload:         { zh: '← 去上传图片',  en: '← Upload Image' },
+    resultTiming:        { zh: '处理耗时',       en: 'Processing Time' },
+    resultSigmaS:       { zh: 'σs 空间半径',   en: 'σs Spatial Radius' },
+    resultSigmaR:       { zh: 'σr 颜色阈值',   en: 'σr Range Threshold' },
+    resultMode:          { zh: '降噪模式',       en: 'Denoising Mode' },
+    modeBilateralFull:  { zh: '彩色双边滤波',   en: 'Color Bilateral' },
+    modeGrayscaleFull:  { zh: '灰度 Y 通道双边滤波', en: 'Grayscale Y Bilateral' },
+    resultTitle:         { zh: '降噪结果',       en: 'Denoised Result' },
+    saveFormat:          { zh: '保存格式',       en: 'Save Format' },
+    savePNG:            { zh: 'PNG',            en: 'PNG' },
+    saveJPEG:           { zh: 'JPEG',           en: 'JPEG' },
+    saveWebP:           { zh: 'WebP',           en: 'WebP' },
+    qualityLabel:        { zh: '压缩质量',       en: 'Quality' },
+    btnSave:             { zh: '保存图片',       en: 'Save Image' },
+    btnNewImage:        { zh: '处理新图片',     en: 'New Image' },
+    btnConfirm:          { zh: '确定',           en: 'Confirm' },
+    photoInfo:           { zh: '照片信息',       en: 'Photo Info' },
+    fileInfo:            { zh: '文件信息',       en: 'File Info' },
+    fileSize:            { zh: '文件大小',       en: 'File Size' },
+    fileFormat:          { zh: '文件格式',       en: 'File Format' },
+    colorSpace:          { zh: '颜色空间',       en: 'Color Space' },
+
+    /* 旅行票根 */
+    ticketTitle:         { zh: '旅行票根',       en: 'Travel Ticket' },
+    ticketDesc:          { zh: '上传照片，生成专属电子旅行票根', en: 'Upload a photo to generate your exclusive digital travel ticket' },
+    ticketUploadHint:    { zh: '拖放或点击上传照片', en: 'Drag or click to upload photo' },
+    ticketUploadFormat:  { zh: '支持 JPG / PNG / WebP', en: 'Supports JPG / PNG / WebP' },
+    ticketPreview:       { zh: '票根预览',       en: 'Ticket Preview' },
+    ticketEditor:        { zh: '编辑票根信息',   en: 'Edit Ticket Info' },
+    ticketDest:          { zh: '目的地',         en: 'Destination' },
+    ticketDestHint:      { zh: '纯英文大写建议15字符以内', en: 'Uppercase English, ≤15 chars recommended' },
+    ticketLocation:      { zh: '中文地名',       en: 'Location (CN)' },
+    ticketDate:          { zh: '日期',           en: 'Date' },
+    ticketName:          { zh: '旅行者',         en: 'Traveler' },
+    ticketNo:            { zh: '票号',           en: 'Ticket No.' },
+    ticketCode:          { zh: '防伪码',         en: 'Security Code' },
+    btnRegenerate:       { zh: '重新生成',       en: 'Regenerate' },
+    btnDownload:         { zh: '下载票根',       en: 'Download Ticket' },
+    btnReupload:         { zh: '重新上传',       en: 'Re-upload' },
+    ticketPlaceholder:   { zh: '上传照片后<br>票根将在此预览', en: 'Ticket preview<br>after upload' },
+    ticketOptions:       { zh: '票根选项',       en: 'Ticket Options' },
+    ticketChangeHint:    { zh: '点击更换照片',   en: 'Click to change photo' },
+
+    /* 创意滤镜 */
+    filterTitle:         { zh: '创意滤镜',       en: 'Creative Filters' },
+    filterDesc:          { zh: '上传照片，一键应用胶片模拟滤镜', en: 'Upload a photo, apply film simulation filters with one click' },
+    filterUploadHint:    { zh: '拖放或点击上传照片', en: 'Drag or click to upload photo' },
+    filterUploadFormat:  { zh: '支持 JPG / PNG / WebP', en: 'Supports JPG / PNG / WebP' },
+    filterPreset:        { zh: '选择滤镜预设',   en: 'Select Filter Preset' },
+    filterCatSony:      { zh: '创意外观',       en: 'Creative Look' },
+    filterCatFilm:      { zh: '胶片模拟',       en: 'Film Sim.' },
+    filterCatTone:      { zh: '类色调',         en: 'Color Tone' },
+    filterFL:            { zh: 'FL · 柔和',     en: 'FL · Soft' },
+    filterNT:            { zh: 'NT · 中性',     en: 'NT · Neutral' },
+    filterVV:            { zh: 'VV · 鲜艳',     en: 'VV · Vivid' },
+    filterSH:            { zh: 'SH · 暗部',     en: 'SH · Shadows' },
+    filterIN:            { zh: 'IN · 即时',     en: 'IN · Instant' },
+    filterPT:            { zh: 'PT · 人像',     en: 'PT · Portrait' },
+    filterAS:            { zh: 'AS · 柔和',     en: 'AS · Soft' },
+    filterPN:            { zh: 'PN · 负片',     en: 'PN · Negative' },
+    filterCC:            { zh: 'CC · Chrome',    en: 'CC · Chrome' },
+    filterTO:            { zh: 'TO · 青橙',     en: 'TO · Teal-Orange' },
+    filterOR:            { zh: 'OR · 橙红',     en: 'OR · Orange-Red' },
+    btnSaveFilter:       { zh: '保存图片',       en: 'Save Image' },
+    btnReuploadFilter:   { zh: '重新上传',       en: 'Re-upload' },
+    filterPlaceholder:   { zh: '上传照片后<br>在此预览滤镜效果', en: 'Filter preview<br>after upload' },
+    filterOptions:       { zh: '滤镜选项',       en: 'Filter Options' },
+    filterPreview:       { zh: '滤镜预览',       en: 'Filter Preview' },
+    filterChangeHint:    { zh: '点击更换照片',   en: 'Click to change photo' },
+
+    /* 个人中心 */
+    profileName:        { zh: 'Young__Yang',                      en: 'Young__Yang' },
+    profileBio:         { zh: '棱镜降噪 · 哈希加速双边滤波',     en: 'PrismDen · Hash-Accelerated Denoising' },
+    statTitle:           { zh: '使用统计',       en: 'Statistics' },
+    statDenoise:        { zh: '图像降噪',       en: 'Denoise' },
+    statFilter:          { zh: '创意滤镜',       en: 'Filters' },
+    statTicket:          { zh: '旅行票根',       en: 'Tickets' },
+    settingsTitle:       { zh: '偏好设置',       en: 'Preferences' },
+    settingDarkMode:     { zh: '深色模式',       en: 'Dark Mode' },
+    darkModeAuto:       { zh: '跟随系统',       en: 'Auto (System)' },
+    darkModeOn:         { zh: '已开启',         en: 'On' },
+    darkModeOff:        { zh: '已关闭',         en: 'Off' },
+    vibrateTitle:       { zh: '震动反馈',       en: 'Haptic Feedback' },
+    vibrateOn:          { zh: '已开启',         en: 'On' },
+    vibrateOff:         { zh: '已关闭',         en: 'Off' },
+    vibrateiOS:         { zh: 'iOS设备暂不支持', en: 'Not supported on iOS' },
+    langTitle:           { zh: '语言 / Language', en: 'Language / 语言' },
+    langZh:             { zh: '中文',           en: '中文' },
+    langEn:             { zh: 'English',        en: 'English' },
+    aboutTitle:          { zh: '关于项目',       en: 'About' },
+    aboutLabelName:     { zh: '项目名称',       en: 'Project Name' },
+    aboutName:          { zh: 'PrismDen · 棱镜降噪',          en: 'PrismDen · Image Denoising' },
+    aboutLabelAlgo:     { zh: '核心算法',       en: 'Core Algorithm' },
+    aboutAlgo:          { zh: '哈希加速双边滤波',                en: 'Hash-Accelerated Bilateral Filter' },
+    aboutDS:            { zh: 'HashMap · LinkedList · MaxHeap · Queue', en: 'HashMap · LinkedList · MaxHeap · Queue' },
+    aboutLabelTech:     { zh: '技术栈',         en: 'Tech Stack' },
+    aboutTech:          { zh: 'C++ · WebAssembly · 液态玻璃 UI',    en: 'C++ · WebAssembly · Glassmorphism UI' },
+    aboutLabelVersion:   { zh: '版本',           en: 'Version' },
+    aboutAuthor:        { zh: 'Young__Yang',                     en: 'Young__Yang' },
+    aboutLabelVersion:   { zh: '版本',           en: 'Version' },
+    aboutVersion:       { zh: 'v1.1.3',                         en: 'v1.1.3' },
+    dataTitle:           { zh: '数据管理',       en: 'Data' },
+    btnClearData:        { zh: '清除本地使用统计', en: 'Clear Usage Statistics' },
+    confirmClear:       { zh: '确定要清除所有本地数据吗？\n（包括使用统计，不影响主题和震动设置）', en: 'Clear all local data?\n(Includes usage statistics. Theme and haptic settings are kept.)' },
+
+    /* 页脚 */
+    footer:             { zh: '© 2026 Young__Yang. All rights reserved.', en: '© 2026 Young__Yang. All rights reserved.' },
+
+    /* Toast 消息 */
+    toastDenoiseStart:  { zh: '降噪处理中...',   en: 'Denoising...' },
+    toastDenoiseDone:  { zh: '降噪完成，耗时 ',   en: 'Denoising complete, time: ' },
+    toastDenoiseErr:   { zh: '降噪失败',         en: 'Denoising failed' },
+    toastFilterDone:    { zh: '滤镜已应用',       en: 'Filter applied' },
+    toastTicketDone:    { zh: '票根已下载',       en: 'Ticket downloaded' },
+    toastDataCleared:   { zh: '本地数据已清除',   en: 'Local data cleared' },
+    toastLangZh:        { zh: '已切换至中文',   en: 'Switched to Chinese' },
+    toastLangEn:        { zh: '已切换至英文',       en: 'Switched to English' },
+    toastNoResult:    { zh: '没有可保存的图片', en: 'No image to save.' },
+    toastNoFormat:    { zh: '请选择保存格式',   en: 'Please select a format.' },
+    toastSaved:      { zh: '已保存: ',         en: 'Saved: ' },
+    toastRemoved:     { zh: '已移除照片',       en: 'Photo removed.' },
+
+    /* 对比浮层 */
+    compareOriginal:    { zh: '原图',   en: 'Original' },
+    compareResult:      { zh: '降噪后', en: 'Denoised' }
+  };
+
+
+  /* —— 获取翻译文本 —— */
+  function t(key) {
+    var entry = dict[key];
+    if (!entry) return key;
+    return entry[currentLang] || entry.zh || key;
+  }
+
+  /* —— 应用语言到 DOM —— */
+  function applyLang(lang) {
+    currentLang = lang;
+
+    // 收集所有带 data-i18n 的元素，过滤掉被父元素嵌套的
+    var allEls = document.querySelectorAll('[data-i18n]');
+    var els = [];
+
+    for (var i = 0; i < allEls.length; i++) {
+      var el = allEls[i];
+      // 检查是否有祖先元素也带 data-i18n，如果有则跳过（由祖先统一处理）
+      var parent = el.parentNode;
+      var nested = false;
+      while (parent && parent !== document) {
+        if (parent.hasAttribute && parent.hasAttribute('data-i18n')) {
+          nested = true;
+          break;
+        }
+        parent = parent.parentNode;
       }
-    })();
-  </script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;700&family=Playfair+Display:wght@400;600;700;800;900&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <script src="exif.js"></script>
-</head>
-<body>
-
-
-<!-- 欢迎遮罩 -->
-<div class="welcome-overlay" id="welcomeOverlay" onclick="var o=this;if(o._d)return;o._d=1;o.style.pointerEvents='none';o.classList.add('fade-out');var h=document.getElementById('page-home');if(h){var e=h.querySelectorAll('.hero-kanji,.word,.hero-subtitle,.hero-actions');for(var i=0;i<e.length;i++){e[i].style.animation='none';e[i].offsetHeight;e[i].style.animation=''}}setTimeout(function(){o.remove();var n=document.querySelector('.nav-link[data-page=home]');if(n)n.classList.add('active')},600)">
-  <div class="welcome-bg-circle welcome-bg-circle-1"></div>
-  <div class="welcome-bg-circle welcome-bg-circle-2"></div>
-  <div class="welcome-bg-circle welcome-bg-circle-3"></div>
-  <div class="welcome-content">
-    <div class="welcome-logo">PrismDen</div>
-    <div class="welcome-subtitle" data-i18n="welcomeSubtitle" data-i18n-html="true">棱镜降噪 · 图像降噪处理平台</div>
-  </div>
-    <div class="welcome-hint" id="welcomeHint" data-i18n="welcomeHint">点击任意位置进入</div>
-  </div>
-</div>
-
-<!-- 背景动画 -->
-<div class="bg-animation">
-  <div class="bg-circle bg-circle-1"></div>
-  <div class="bg-circle bg-circle-2"></div>
-  <div class="bg-circle bg-circle-3"></div>
-</div>
-
-<!-- 导航栏 -->
-<nav class="navbar" id="navbar">
-  <div class="nav-brand" id="navBrand">
-    <div class="nav-brand-row">
-      <img src="002.jpg" class="nav-icon" onclick="switchPage('home')" style="cursor:pointer;width:22px;height:22px;" alt="logo">
-      <span class="nav-title"><a href="#" onclick="switchPage('home'); return false;">PrismDen <em data-i18n="brandTag"> · 棱镜降噪</em></a></span>
-    </div>
-  </div>
-  <div class="nav-links" id="navLinks">
-    <span class="nav-link active" data-page="home" data-i18n="navHome">首页</span>
-    <span class="nav-link" data-page="features" data-i18n="navFeatures">核心特性</span>
-    <span class="nav-link" data-page="guide" data-i18n="navGuide">参数指南</span>
-    <span class="nav-link" data-page="upload" data-i18n="navUpload">图像降噪</span>
-    <span class="nav-link" data-page="result" data-i18n="navResult">降噪结果</span>
-    <span class="nav-link" data-page="ticket" data-i18n="navTicket">旅行票根</span>
-    <span class="nav-link" data-page="filter" data-i18n="navFilter">创意滤镜</span>
-    <span class="nav-link" data-page="profile" data-i18n="navProfile">个人中心</span>
-  </div>
-  <div class="nav-right">
-    <div class="nav-status" id="statusBar">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText" data-i18n="statusConnecting">等待后端连接...</span>
-    </div>
-    <!-- <button class="nav-ping-btn" onclick="pingBackend()">检测服务</button> -->
-    <button class="volume-btn" id="volumeBtn" onclick="toggleSound()" title="音效开关">
-      <svg class="volume-on" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-      </svg>
-      <svg class="volume-off" style="display:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <line x1="23" y1="9" x2="17" y2="15"></line>
-        <line x1="17" y1="9" x2="23" y2="15"></line>
-      </svg>
-    </button>
-  </div>
-</nav>
-
-<!-- ==================== Page 1: 首页 ==================== -->
-<section class="page-section active" id="page-home" data-page="home">
-
-  <section class="hero">
-    <div class="hero-sketch-bg">
-      <img src="./hero-sketch.png" alt="" class="hero-sketch hero-desktop" />
-      <img src="./hero-boy.png" alt="" class="hero-sketch hero-mobile" />
-    </div>
-    <div class="hero-inner">
-      <div class="hero-content">
-        <p class="hero-kanji" data-i18n="heroKanji">Image Processing · Young__Yang</p>
-        <h1 class="hero-title">
-          <span class="word-wrap"><span class="word">PrismDen</span></span>
-          <span class="word-wrap"><span class="word"><em>棱镜</em></span></span>
-        </h1>
-        <p class="hero-subtitle"><span data-i18n="heroSubtitle" data-i18n-html="true">Hash-Accelerated Bilateral Filtering<br>哈希加速双边滤波图像降噪项目</span></p>
-        <div class="hero-actions">
-          <button class="btn btn-hero-action" onclick="switchPage('upload')" data-i18n="btnDenoise">即刻降噪</button>
-          <button class="btn btn-hero-filter" onclick="switchPage('filter')" data-i18n="btnFilter">创意滤镜</button>
-          <div class="theme-switcher" id="themeSwitcher">
-            <span class="theme-option active" data-theme-option="light" onclick="setTheme('light')" data-i18n="themeLight">浅色</span>
-            <span class="theme-option" data-theme-option="dark" onclick="setTheme('dark')" data-i18n="themeDark">深色</span>
-            <div class="theme-pill"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="scroll-hint" onclick="switchPage('features')" style="cursor:pointer;">
-      <!-- <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="9 6 15 12 9 18"></polyline>
-      </svg> -->
-      <!-- <span style="font-size:0.82rem; color:var(--stone); letter-spacing:0.08em;">向下滚动查看详情</span> -->
-    </div>
-  </section>
-</section><!-- end #page-home -->
-
-<!-- ==================== Page 2: 核心特性 ==================== -->
-<section class="page-section" id="page-features" data-page="features">
-
-  <main class="page-main">
-    <div class="features-grid">
-      <div class="feature-card glass-card">
-        <h3 data-i18n="featBilateral">双边滤波算法</h3>
-        <p data-i18n="featBilateralDesc">空间权重与色彩权重联合保边去噪，精准区分噪声与细节边缘，避免传统高斯滤波导致的模糊</p>
-        <div class="feature-formula">W = G<sub>s</sub>(||x||) · G<sub>r</sub>(||I||)</div>
-      </div>
-      <div class="feature-card glass-card">
-        <h3 style="font-size:1.25rem; line-height:1.8; color:var(--ink);" data-i18n="featDS">数据结构</h3>
-        <p data-i18n="featDSDesc">综合运用哈希表、链表、大顶堆、队列等数据结构来管理处理流水线</p>
-      </div>
-      <div class="feature-card glass-card">
-        <h3 data-i18n="featCPP">C++ 后端</h3>
-        <p data-i18n="featCPPDesc">原生 C++ HTTP 服务器，LUT 加速双边滤波，Catmull-Rom 双三次上采样，Unsharp Mask 锐化</p>
-        <div class="feature-formula" style="font-size:0.7rem">MAX_EDGE=1000 · Radius≤5 · LUT×65536</div>
-      </div>
-      <div class="feature-card glass-card">
-        <h3 data-i18n="featFormat">多格式支持</h3>
-        <p data-i18n="featFormatDesc">支持 PNG、JPG、JPEG、RAW、BMP、TIFF、WebP 等主流图片格式输入，输出 PNG/JPEG/WebP</p>
-        <div class="feature-formula" style="font-size:0.7rem">PNG · JPG · RAW · BMP · TIFF · WebP</div>
-      </div>
-    </div>
-    <div class="cta-block">
-      <button class="btn btn-primary btn-lg" onclick="switchPage('guide')" data-i18n="btnViewGuide">查看参数指南 →</button>
-    </div>
-  </main>
-
-</section><!-- end #page-features -->
-
-<!-- ==================== Page: 参数指南 ==================== -->
-<section class="page-section" id="page-guide" data-page="guide">
-
-  <main class="page-main">
-    <!-- <div class="panel-header">
-      <span class="panel-num">?</span>
-      <h2><span data-i18n="navGuide"><span data-i18n="btnBackToGuide">参数指南</span></span></h2>
-    </div> -->
-
-    <p style="text-align:center; color:var(--ink-faded); font-size:1.1rem; max-width:720px; margin:0 auto 2.5rem; line-height:1.7;" data-i18n="guideIntro">调整降噪参数前，先了解两个核心参数的含义与推荐取值，助你快速找到最佳效果</p>
-
-    <div class="upload-params-grid">
-      <!-- 左：空间半径说明 -->
-      <div class="guide-col">
-        <div class="glass-card bounce-card" style="animation-delay:0s;">
-          <h3 style="font-family:var(--font-display); font-size:1.5rem; font-weight:300; color:var(--ink); margin-bottom:1rem;" data-i18n="guideSpace">空间半径</h3>
-          <p style="font-size:1.05rem; color:var(--ink-faded); line-height:1.7; margin-bottom:1rem;" data-i18n="guideSpaceDesc" data-i18n-html="true">
-            控制滤波器的<span style="color:var(--orange); font-weight:600;">空间作用范围</span>。数值越大，参与计算的像素距离越远，降噪力度越强，但细节也可能被过度平滑。
-          </p>
-          <div class="feature-formula" style="margin-bottom:1rem; text-align:center;">G<sub>s</sub> = exp(−||xy||² / 2σ<sub>s</sub>²)</div>
-          <div style="display:flex; flex-direction:column; gap:0.7rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:6px 10px; background:rgba(184,168,152,0.06); border-radius:8px;">
-              <span style="color:var(--stone);"><span data-i18n="sigmaSScaleL">1 − 3</span></span>
-              <span style="color:var(--ink); font-weight:500;" data-i18n="sigmaSLightDesc">轻微降噪，保留最多细节</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:6px 10px; background:rgba(184,168,152,0.06); border-radius:8px;">
-              <span style="color:var(--stone);" data-i18n="sigmaSRec">4 − 7（推荐）</span>
-              <span style="color:var(--orange); font-weight:600;" data-i18n="sigmaSRecDesc">日常使用，细节与降噪平衡</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:6px 10px; background:rgba(184,168,152,0.06); border-radius:8px;">
-              <span style="color:var(--stone);">8 − 15</span>
-              <span style="color:var(--ink); font-weight:500;" data-i18n="sigmaSStrongDesc">强力降噪，适合高噪声风景照</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 右：颜色阈值说明 -->
-      <div class="guide-col">
-        <div class="glass-card bounce-card" style="animation-delay:0.6s;">
-          <h3 style="font-family:var(--font-display); font-size:1.5rem; font-weight:300; color:var(--ink); margin-bottom:1rem;" data-i18n="guideRange">颜色阈值</h3>
-          <p style="font-size:1.05rem; color:var(--ink-faded); line-height:1.7; margin-bottom:1rem;" data-i18n="guideRangeDesc" data-i18n-html="true">
-            控制<span style="color:var(--orange); font-weight:600;">颜色相似度阈值</span>。数值越小，颜色边界保护越强（边缘越清晰）；数值越大，跨边缘平滑越激进。
-          </p>
-          <div class="feature-formula" style="margin-bottom:1rem; text-align:center;">G<sub>r</sub> = exp(−||I||² / 2σ<sub>r</sub>²)</div>
-          <div style="display:flex; flex-direction:column; gap:0.7rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:6px 10px; background:rgba(184,168,152,0.06); border-radius:8px;">
-              <span style="color:var(--stone);">1 − 15</span>
-              <span style="color:var(--ink); font-weight:500;" data-i18n="sigmaRLowDesc">强保边，适合人像、建筑</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:6px 10px; background:rgba(184,168,152,0.06); border-radius:8px;">
-              <span style="color:var(--stone);" data-i18n="sigmaRRec">16 − 40（推荐）</span>
-              <span style="color:var(--orange); font-weight:600;" data-i18n="sigmaRRecDesc">平衡保边与平滑，默认 25</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:6px 10px; background:rgba(184,168,152,0.06); border-radius:8px;">
-              <span style="color:var(--stone);">41 − 100</span>
-              <span style="color:var(--ink); font-weight:500;" data-i18n="sigmaRHighDesc">平滑优先，适合天空、水面等</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div style="text-align:center; margin-top:2rem;">
-      <button class="btn btn-primary btn-lg" onclick="switchPage('upload')" data-i18n="btnGoParams">去调整参数 →</button>
-    </div>
-  </main>
-
-</section><!-- end #page-guide -->
-
-<!-- ==================== Page 3: 上传处理 ==================== -->
-<section class="page-section" id="page-upload" data-page="upload">
-
-  <main class="page-main page-main-wide">
-    <div class="upload-params-grid">
-
-      <!-- 左列：上传区域 -->
-      <section class="content-section upload-col">
-        <div class="panel-header">
-          <h2 data-i18n="uploadTitle">导入图片</h2>
-        </div>
-
-        <div class="upload-zone glass-card bounce-card" id="uploadZone" style="animation-delay:0s;">
-          <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.raw,.bmp,.tiff,.tif,.webp" hidden />
-          <div class="upload-inner" id="uploadInner">
-            <div class="upload-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <path d="M24 10V34M24 10L16 18M24 10L32 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M10 36H38" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <p class="upload-hint" data-i18n="uploadHint">拖拽或点击导入图片</p>
-            <p class="upload-format" data-i18n="uploadFormat">支持 PNG · JPG · JPEG · RAW · BMP · TIFF · WebP</p>
-          </div>
-        </div>
-
-        <div class="preview-block" id="previewBlock">
-          <img id="previewImg" class="preview-img hidden" alt="预览图" />
-          <canvas id="inputCanvas" class="img-canvas hidden"></canvas>
-          <div class="img-actions hidden" id="imgActions">
-            <button class="img-action-btn change" onclick="changeImage()">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M13 2H3L2 5V14H14V5L13 2Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-                <path d="M8 12V6M8 6L5 9M8 6L11 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span data-i18n="btnChangePhoto">更换照片</span>
-            </button>
-            <button class="img-action-btn remove" onclick="removeImage()">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M5 2L2 5V14H14V5L11 2H5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-                <path d="M6 7L10 11M10 7L6 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span data-i18n="btnRemovePhoto">移除照片</span>
-            </button>
-          </div>
-          <div class="img-meta hidden" id="imgMeta">
-            <div class="meta-row"><span class="meta-key"><span data-i18n="metaName">文件名</span></span><span class="meta-val" id="metaName">--</span></div>
-            <div class="meta-row"><span class="meta-key"><span data-i18n="metaFormat">格式</span></span><span class="meta-val" id="metaFormat">--</span></div>
-            <div class="meta-row"><span class="meta-key"><span data-i18n="metaSize">大小</span></span><span class="meta-val" id="metaBytes">--</span></div>
-            <div class="meta-divider"></div>
-            <div class="meta-sub" data-i18n="metaCamera">相机参数</div>
-            <div class="meta-row meta-exif-row"><span class="meta-key"><span data-i18n="metaMake">相机制造商</span></span><span class="meta-val" id="metaMake">--</span></div>
-            <div class="meta-row meta-exif-row"><span class="meta-key"><span data-i18n="metaModel">相机型号</span></span><span class="meta-val" id="metaModel">--</span></div>
-            <div class="meta-row meta-exif-row"><span class="meta-key"><span data-i18n="metaAperture">光圈</span></span><span class="meta-val" id="metaAperture">--</span></div>
-            <div class="meta-row meta-exif-row"><span class="meta-key"><span data-i18n="metaShutter">快门</span></span><span class="meta-val" id="metaShutter">--</span></div>
-            <div class="meta-row meta-exif-row"><span class="meta-key"><span data-i18n="metaISO">ISO</span></span><span class="meta-val" id="metaISO">--</span></div>
-            <div class="meta-row meta-exif-row"><span class="meta-key"><span data-i18n="metaFocal">焦距</span></span><span class="meta-val" id="metaFocal">--</span></div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- 右列：降噪参数 -->
-      <section class="content-section params-col">
-        <div class="panel-header" style="flex-wrap:wrap;">
-          <h2 data-i18n="paramTitle">降噪参数</h2>
-          <button class="btn btn-ghost" onclick="switchPage('guide')" style="margin-left:auto; font-size:0.82rem; padding:0.5rem 1.1rem;" data-i18n="btnBackToGuide">← 参数指南</button>
-        </div>
-
-        <!-- <div class="params-grid">
-          <div class="param-card glass-card bounce-card" style="animation-delay:0.4s;">
-            <h3 class="param-card-title"><span data-i18n="featBilateral">双边滤波算法</span></h3>
-            <div class="algo-formula">
-              W(i,j) = G<sub>s</sub>(|i&minus;j|) &middot; G<sub>r</sub>(|I(i)&minus;I(j)|)<br/>
-              G<sub>s</sub> = exp(&minus;||xy||&sup2; / 2&sigma;<sub>s</sub>&sup2;)<br/>
-              G<sub>r</sub> = exp(&minus;||I||&sup2; / 2&sigma;<sub>r</sub>&sup2;)
-            </div>
-          </div>
-          <div class="param-card glass-card bounce-card" style="animation-delay:0.8s;">
-            <h3 class="param-card-title" style="font-size:1.15rem; line-height:1.8;">云赴山巅<br>自在远行<br>春和景明<br>白日梦想家</h3>
-          </div>
-        </div> -->
-
-        <div class="param-controls glass-card bounce-card" style="animation-delay:1.2s;">
-          <div class="param-group">
-            <label class="param-label">
-              <span data-i18n="sigmaSLabel">空间半径</span> &sigma;<sub>s</sub> = <em id="sigmaS_val">5</em>
-            </label>
-            <input type="range" class="slider" id="sigmaS" min="1" max="15" value="5"
-              oninput="document.getElementById('sigmaS_val').textContent=this.value" />
-            <div class="param-scale"><span data-i18n="sigmaSScaleL">1 &mdash; 轻微</span><span data-i18n="sigmaSScaleR">15 &mdash; 强力</span></div>
-          </div>
-
-          <div class="param-group">
-            <label class="param-label">
-              <span data-i18n="sigmaRLabel">颜色阈值</span> &sigma;<sub>r</sub> = <em id="sigmaR_val">25</em>
-            </label>
-            <input type="range" class="slider" id="sigmaR" min="1" max="100" value="25"
-              oninput="document.getElementById('sigmaR_val').textContent=this.value" />
-            <div class="param-scale"><span data-i18n="sigmaRScaleL">1 &mdash; 保边</span><span data-i18n="sigmaRScaleR">100 &mdash; 平滑</span></div>
-          </div>
-
-          <div class="param-group">
-            <label class="param-label"><span data-i18n="resultMode">降噪模式</span></label>
-            <div class="mode-tabs" id="modeTabs">
-              <button class="mode-tab active" data-mode="bilateral" onclick="selectMode(this)"><span data-i18n="modeBilateral">彩色双边</span></button>
-              <button class="mode-tab" data-mode="grayscale_bilateral" onclick="selectMode(this)"><span data-i18n="modeGrayscale">灰度 Y 通道</span></button>
-              <div class="mode-pill" id="modePill"></div>
-            </div>
-          </div>
-
-          <button class="btn btn-primary btn-process" id="processBtn" onclick="processImage()" disabled>
-            <span class="btn-text" data-i18n="btnStartDenoise">开始图像降噪</span>
-            <div class="btn-spinner hidden" id="btnSpinner"></div>
-          </button>
-
-          <div class="progress-wrap hidden" id="progressWrap">
-            <div class="progress-bar" id="progressBar" style="width:0%"></div>
-            <span class="progress-text" id="progressText" data-i18n="processing">处理中...</span>
-          </div>
-
-          <div class="timing hidden" id="timingBlock">
-            <span class="timing-label"><span data-i18n="resultTiming">处理耗时</span></span>
-            <span class="timing-val" id="timingVal">-- ms</span>
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-</section><!-- end #page-upload -->
-
-<!-- ==================== Page 4: 处理结果 ==================== -->
-<section class="page-section" id="page-result" data-page="result">
-
-  <main class="page-main" id="mainContent">
-
-    <!-- 无结果提示 -->
-    <div class="empty-state glass-card" id="emptyState">
-      <h3 data-i18n="emptyTitle">暂无处理结果</h3>
-      <p data-i18n="emptyDesc">请先前往上传处理页面导入图片并进行降噪处理</p>
-      <button class="goto-upload-btn" onclick="switchPage('upload')"><span data-i18n="btnGoUpload">去上传图片</span></button>
-    </div>
-
-    <!-- 结果展示区 -->
-    <div id="resultContent" class="hidden">
-
-      <!-- 耗时 + 参数信息 -->
-      <div class="result-info-bar glass-card bounce-card" id="resultInfoBar" style="animation-delay:0s;">
-        <div class="info-item">
-          <span class="info-label"><span data-i18n="resultTiming">处理耗时</span></span>
-          <span class="info-val" id="resultTiming">--</span>
-        </div>
-        <div class="info-divider"></div>
-        <div class="info-item">
-            <span class="info-label">&sigma;<sub>s</sub> <span data-i18n="sigmaSLabel">空间半径</span></span>
-            <span class="info-val" id="resultSigmaS">--</span>
-          </div>
-          <div class="info-divider"></div>
-          <div class="info-item">
-            <span class="info-label">&sigma;<sub>r</sub> <span data-i18n="sigmaRLabel">颜色阈值</span></span>
-          <span class="info-val" id="resultSigmaR">--</span>
-        </div>
-        <div class="info-divider"></div>
-        <div class="info-item">
-          <span class="info-label"><span data-i18n="resultMode">降噪模式</span></span>
-          <span class="info-val" id="resultMode">--</span>
-        </div>
-      </div>
-
-      <!-- 左右布局：左=降噪结果+保存，右=照片信息 -->
-      <div class="result-grid">
-
-        <!-- 左栏：降噪结果 + 保存图片（上下分布） -->
-        <div class="result-left-col">
-          <!-- 降噪结果 -->
-          <section class="content-section">
-            <div class="panel-header">
-              <h2 data-i18n="resultTitle">降噪结果</h2>
-            </div>
-            <div class="result-canvas-wrap glass-card bounce-card" style="animation-delay:0.5s;">
-              <canvas id="resultCanvas" class="img-canvas-full"></canvas>
-            </div>
-            <!-- <div class="compare-hint" id="compareHint" onclick="openCompare()">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 2L2 8L6 14M10 2L14 8L10 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              点击对比查看<span data-i18n="compareOriginal">原图</span> / 处理后效果
-            </div> -->
-          </section>
-
-          <!-- 保存图片（在降噪结果下方） -->
-          <section class="content-section" style="margin-top:2rem;">
-            <!-- <div class="panel-header">
-              <h2><span data-i18n="btnSave"><span data-i18n="btnSaveFilter">保存图片</span></span></h2>
-            </div> -->
-            <div class="save-block glass-card bounce-card" id="saveBlock" style="animation-delay:1.0s;">
-              <div class="save-format-row">
-                <span class="save-label" data-i18n="saveFormat">保存格式</span>
-                <div class="save-format-tabs" id="saveFormatTabs">
-                  <button class="save-fmt-btn active" data-fmt="png" onmouseenter="selectSaveFormat(this)"><span data-i18n="savePNG">PNG</span></button>
-                  <button class="save-fmt-btn" data-fmt="jpeg" onmouseenter="selectSaveFormat(this)"><span data-i18n="saveJPEG">JPEG</span></button>
-                  <button class="save-fmt-btn" data-fmt="webp" onmouseenter="selectSaveFormat(this)"><span data-i18n="saveWebP">WebP</span></button>
-                  <div class="save-format-pill"></div>
-                </div>
-              </div>
-              <div id="qualityRow" style="display:none; flex-direction:column; gap:8px;">
-                <label class="param-label"><span data-i18n="qualityLabel">压缩质量</span> <em id="qualityVal">92</em>%</label>
-                <input type="range" class="slider" id="qualitySlider" min="60" max="100" value="92"
-                  oninput="document.getElementById('qualityVal').textContent=this.value" />
-              </div>
-              <div class="save-actions" id="saveActions">
-                <button class="save-action-btn" data-action="save" onmouseenter="selectSaveAction(this)"><span data-i18n="btnSave">保存图片</span></button>
-                <button class="save-action-btn" data-action="new" onmouseenter="selectSaveAction(this)"><span data-i18n="btnNewImage">处理新图片</span></button>
-                <div class="save-action-pill"></div>
-              </div>
-              <button class="save-confirm-btn" id="saveConfirmBtn" onclick="executeSaveAction()"><span data-i18n="btnConfirm">确定</span></button>
-            </div>
-          </section>
-        </div>
-
-        <!-- 右栏：照片信息（精简） -->
-        <section class="content-section result-right-col">
-          <div class="panel-header">
-            <h2><span data-i18n="photoInfo">照片信息</span></h2>
-          </div>
-          <div class="photo-info glass-card bounce-card" id="photoInfoBlock" style="animation-delay:0.8s;">
-            <!-- 相机参数 -->
-            <div class="info-sub-header" data-i18n="metaCamera">相机参数</div>
-            <div class="info-row">
-              <span class="info-key"><span data-i18n="metaMake">相机制造商</span></span>
-              <span class="info-val" id="infoMake">--</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key"><span data-i18n="metaModel">相机型号</span></span>
-              <span class="info-val" id="infoModel">--</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key"><span data-i18n="metaAperture">光圈</span></span>
-              <span class="info-val" id="infoAperture">--</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key"><span data-i18n="metaShutter">快门</span></span>
-              <span class="info-val" id="infoShutter">--</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key"><span data-i18n="metaISO">ISO</span></span>
-              <span class="info-val" id="infoISO">--</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key"><span data-i18n="metaFocal">焦距</span></span>
-              <span class="info-val" id="infoFocal">--</span>
-            </div>
-            <div class="info-divider-row"></div>
-            <!-- 文件信息 -->
-            <div class="info-sub-header"><span data-i18n="fileInfo">文件信息</span></div>
-            <div class="info-row">
-              <span class="info-key" data-i18n="fileSize">文件大小</span>
-              <span class="info-val" id="infoFileSize">--</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key" data-i18n="fileFormat">文件格式</span>
-              <span class="info-val" id="infoFormat">--</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key"><span data-i18n="colorSpace">颜色空间</span></span>
-              <span class="info-val" id="infoColorSpace">--</span>
-            </div>
-          </div>
-        </section>
-
-      </div>
-
-    </div>
-
-  </main>
-
-</section><!-- end #page-result -->
-
-<!-- ==================== Page: 旅行票根 ==================== -->
-<section class="page-section" id="page-ticket" data-page="ticket">
-
-  <div class="ticket-page">
-    <!-- 左侧：上传 & 设置 -->
-    <div class="ticket-panel" id="ticketPanel">
-      <div class="sheet-top-bar">
-        <div class="sheet-drag-handle"></div>
-        <button class="sheet-expand-btn" id="ticketExpandBtn" aria-label="展开/收起弹窗">
-          <svg class="arrow-up" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="18 15 12 9 6 15"/>
-          </svg>
-          <svg class="arrow-down" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </button>
-      </div>
-      <div class="ticket-panel-title" data-i18n="ticketTitle">旅行票根</div>
-      <p class="ticket-panel-desc" data-i18n="ticketDesc">上传照片，生成专属电子旅行票根</p>
-
-      <div class="ticket-upload-zone" id="ticketUploadZone">
-        <div class="ticket-upload-content" id="ticketUploadContent">
-          <div class="ticket-upload-icon">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="6" y="10" width="36" height="28" rx="4"/>
-              <circle cx="17" cy="22" r="3"/>
-              <path d="M6 32l10-12 8 10 6-6 12 14"/>
-            </svg>
-          </div>
-          <p class="ticket-upload-text" data-i18n="ticketUploadHint">拖放或点击上传照片</p>
-          <p class="ticket-upload-hint" data-i18n="ticketUploadFormat">支持 JPG / PNG / WebP</p>
-        </div>
-        <div class="ticket-upload-preview" id="ticketUploadPreview" style="display:none;">
-          <img id="ticketUploadPreviewImg" src="" alt="预览" />
-          <p class="ticket-upload-text" style="margin-top:8px;font-size:0.82rem;color:var(--ink-faded);" data-i18n="ticketChangeHint">点击更换照片</p>
-        </div>
-        <input type="file" id="ticketFileInput" accept="image/*" hidden>
-      </div>
-
-      <!-- 移动端：弹窗内票根预览（上传后显示生成的票根缩略版） -->
-      <div class="ticket-sheet-preview" id="ticketSheetPreview" style="display:none;">
-        <p class="ticket-sheet-preview-label" data-i18n="ticketPreview">票根预览</p>
-        <div class="ticket-sheet-preview-inner" id="ticketSheetPreviewInner"></div>
-      </div>
-
-      <div class="ticket-editor" id="ticketEditorBlock" style="display:none;">
-        <p class="editor-title" data-i18n="ticketEditor">编辑票根信息</p>
-        <div class="form-group">
-          <label class="form-label"><span data-i18n="ticketDest">目的地</span></label>
-          <input type="text" id="ticketDestination" class="form-input" placeholder="如：CHUAN XI" value="CHUAN XI" autocomplete="off" autocorrect="off" autocapitalize="characters" inputmode="text">
-          <span class="form-hint"><span data-i18n="ticketDestHint">纯英文大写建议15字符以内</span></span>
-        </div>
-        <div class="form-group">
-          <label class="form-label" data-i18n="ticketLocation">中文地名</label>
-          <input type="text" id="ticketLocationCN" class="form-input" placeholder="如：中国 · 川西" value="中国 · 川西" autocomplete="off" autocorrect="off" inputmode="text">
-        </div>
-        <div class="form-group">
-          <label class="form-label"><span data-i18n="ticketDate">日期</span></label>
-          <input type="text" id="ticketDate" class="form-input" placeholder="如：2026 · 7" value="2026 · 7" autocomplete="off" autocorrect="off" inputmode="text">
-        </div>
-        <div class="form-group">
-          <label class="form-label"><span data-i18n="ticketName">旅行者</span></label>
-          <input type="text" id="ticketName" class="form-input" placeholder="如：Young__Yang" value="Young__Yang" autocomplete="off" autocorrect="off" inputmode="text">
-        </div>
-        <div class="form-group">
-          <label class="form-label"><span data-i18n="ticketNo">票号</span></label>
-          <input type="text" id="ticketTicketNo" class="form-input" placeholder="如：NO.028561" value="NO.028561" autocomplete="off" autocorrect="off" inputmode="text">
-        </div>
-        <div class="form-group">
-          <label class="form-label"><span data-i18n="ticketCode">防伪码</span></label>
-          <input type="text" id="ticketCode" class="form-input" placeholder="自动生成" readonly autocomplete="off" autocorrect="off" inputmode="text">
-          <button class="btn-regenerate" onclick="regenerateTicketCode()"><span data-i18n="btnRegenerate">重新生成</span></button>
-        </div>
-        <div class="editor-actions">
-          <button class="btn btn-primary" onclick="downloadTicket()" data-i18n="btnDownload">下载票根</button>
-          <button class="btn btn-secondary" onclick="resetTicketAll()" data-i18n="btnReupload">重新上传</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 右侧：票根预览 -->
-    <div class="ticket-preview-area" id="ticketPreviewArea">
-      <div class="preview-placeholder" id="ticketPreviewPlaceholder">
-        <div class="placeholder-content">
-          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" stroke="var(--stone)" stroke-width="1">
-            <rect x="8" y="16" width="64" height="48" rx="8"/>
-            <path d="M8 38h64"/>
-            <rect x="20" y="24" width="16" height="10" rx="2"/>
-            <line x1="44" y1="27" x2="60" y2="27"/>
-            <line x1="44" y1="32" x2="56" y2="32"/>
-            <path d="M56 56l8 8M64 56l-8 8" stroke-width="1.5"/>
-          </svg>
-          <p data-i18n="ticketPlaceholder" data-i18n-html="true">上传照片后<br>票根将在此预览</p>
-        </div>
-      </div>
-      <div class="ticket-container" id="ticketContainer" style="display:none;">
-        <div class="ticket" id="ticket">
-          <!-- JS动态生成 -->
-        </div>
-      </div>
-      <!-- 移动端：底部浮动切换按钮 -->
-      <div class="ticket-mobile-toggle" id="ticketMobileToggle">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-          <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-          <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
-          <line x1="17" y1="16" x2="23" y2="16"/>
-        </svg>
-        <span><span data-i18n="ticketOptions">票根选项</span></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 移动端：底部弹窗遮罩 -->
-  <div class="ticket-mobile-backdrop" id="ticketMobileBackdrop"></div>
-</section><!-- end #page-ticket -->
-
-<!-- ==================== Page: 创意滤镜 ==================== -->
-<section class="page-section" id="page-filter" data-page="filter">
-
-  <div class="filter-page">
-    <!-- 左侧：上传 & 滤镜选择 -->
-    <div class="filter-panel" id="filterPanel">
-      <div class="sheet-top-bar">
-        <div class="sheet-drag-handle"></div>
-        <button class="sheet-expand-btn" id="filterExpandBtn" aria-label="展开/收起弹窗">
-          <svg class="arrow-up" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="18 15 12 9 6 15"/>
-          </svg>
-          <svg class="arrow-down" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </button>
-      </div>
-      <div class="filter-panel-title" data-i18n="filterTitle">创意滤镜</div>
-      <p class="filter-panel-desc" data-i18n="filterDesc">上传照片，一键应用胶片模拟滤镜</p>
-
-      <div class="filter-upload-zone" id="filterUploadZone">
-        <div class="filter-upload-content" id="filterUploadContent">
-          <div class="filter-upload-icon">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="6" y="10" width="36" height="28" rx="4"/>
-              <circle cx="17" cy="22" r="3"/>
-              <path d="M6 32l10-12 8 10 6-6 12 14"/>
-            </svg>
-          </div>
-          <p class="filter-upload-text" data-i18n="filterUploadHint">拖放或点击上传照片</p>
-          <p class="filter-upload-hint" data-i18n="filterUploadFormat">支持 JPG / PNG / WebP</p>
-        </div>
-        <div class="filter-upload-preview" id="filterUploadPreview" style="display:none;">
-          <img id="filterUploadPreviewImg" src="" alt="预览" />
-          <p class="filter-upload-text" style="margin-top:8px;font-size:0.82rem;color:var(--ink-faded);" data-i18n="filterChangeHint">点击更换照片</p>
-        </div>
-        <input type="file" id="filterFileInput" accept="image/*" hidden>
-      </div>
-
-      <!-- 移动端：弹窗内滤镜预览 -->
-      <div class="filter-sheet-preview" id="filterSheetPreview" style="display:none;">
-        <p class="filter-sheet-preview-label" data-i18n="filterPreview">滤镜预览</p>
-        <div class="filter-sheet-preview-inner" id="filterSheetPreviewInner"></div>
-      </div>
-
-      <div class="filter-editor" id="filterEditorBlock" style="display:none;">
-        <p class="filter-editor-title" data-i18n="filterPreset">选择滤镜预设</p>
-
-        <!-- 滤镜类别切换 -->
-        <div class="filter-category-tabs">
-          <span class="filter-category-pill"></span>
-          <button class="filter-category-tab active" data-category="sony"><span data-i18n="filterCatSony">创意外观</span></button>
-          <button class="filter-category-tab" data-category="film"><span data-i18n="filterCatFilm">胶片模拟</span></button>
-          <button class="filter-category-tab" data-category="tone"><span data-i18n="filterCatTone">类色调</span></button>
-        </div>
-
-        <div class="filter-presets" data-category="sony">
-          <button class="filter-preset-btn" data-filter="FL">
-            <span class="filter-preset-dot fl"></span>
-            <span class="filter-preset-label"><span data-i18n="filterFL">FL · 柔和</span></span>
-          </button>
-          <button class="filter-preset-btn" data-filter="NT">
-            <span class="filter-preset-dot nt"></span>
-            <span class="filter-preset-label"><span data-i18n="filterNT">NT · 中性</span></span>
-          </button>
-          <button class="filter-preset-btn" data-filter="VV">
-            <span class="filter-preset-dot vv"></span>
-            <span class="filter-preset-label"><span data-i18n="filterVV">VV · 鲜艳</span></span>
-          </button>
-          <button class="filter-preset-btn" data-filter="SH">
-            <span class="filter-preset-dot sh"></span>
-            <span class="filter-preset-label"><span data-i18n="filterSH">SH · 暗部</span></span>
-          </button>
-          <button class="filter-preset-btn" data-filter="IN">
-            <span class="filter-preset-dot in"></span>
-            <span class="filter-preset-label"><span data-i18n="filterIN">IN · 即时</span></span>
-          </button>
-        </div>
-
-        <div class="filter-presets" data-category="film" style="display:none;">
-          <button class="filter-preset-btn" data-filter="PT">
-            <span class="filter-preset-dot pt"></span>
-            <span class="filter-preset-label"><span data-i18n="filterPT">PT · 人像</span></span>
-          </button>
-          <button class="filter-preset-btn" data-filter="AS">
-            <span class="filter-preset-dot as"></span>
-            <span class="filter-preset-label"><span data-i18n="filterAS">AS · 柔和</span></span>
-          </button>
-          <button class="filter-preset-btn" data-filter="PN">
-            <span class="filter-preset-dot pn"></span>
-            <span class="filter-preset-label"><span data-i18n="filterPN">PN · 负片</span></span>
-          </button>
-          <button class="filter-preset-btn" data-filter="CC">
-            <span class="filter-preset-dot cc"></span>
-            <span class="filter-preset-label"><span data-i18n="filterCC">CC · Chrome</span></span>
-          </button>
-        </div>
-        <div class="filter-presets" data-category="tone" style="display:none;">
-          <button class="filter-preset-btn" data-filter="TO">
-            <span class="filter-preset-dot to"></span>
-            <span class="filter-preset-label"><span data-i18n="filterTO">TO · 青橙</span></span>
-          </button>
-          <button class="filter-preset-btn" data-filter="OR">
-            <span class="filter-preset-dot or"></span>
-            <span class="filter-preset-label"><span data-i18n="filterOR">OR · 橙红</span></span>
-          </button>
-        </div>
-        <div class="filter-editor-actions">
-          <button class="btn btn-primary" onclick="downloadFilterResult()" data-i18n="btnSave">保存图片</button>
-          <button class="btn btn-secondary" onclick="resetFilterAll()" data-i18n="btnReupload">重新上传</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 右侧：滤镜预览 -->
-    <div class="filter-preview-area" id="filterPreviewArea">
-      <div class="filter-preview-placeholder" id="filterPreviewPlaceholder">
-        <div class="placeholder-content">
-          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" stroke="var(--stone)" stroke-width="1">
-            <rect x="8" y="16" width="64" height="48" rx="8"/>
-            <circle cx="30" cy="36" r="8"/>
-            <path d="M8 52l14-16 8 10 12-14 22 22"/>
-            <circle cx="58" cy="30" r="3" fill="var(--stone)"/>
-          </svg>
-          <p data-i18n="filterPlaceholder" data-i18n-html="true">上传照片后<br>在此预览滤镜效果</p>
-        </div>
-      </div>
-      <div class="filter-result-container" id="filterResultContainer" style="display:none;">
-        <img id="filterResultImg" src="" alt="滤镜结果" />
-      </div>
-      <!-- 移动端：底部浮动切换按钮 -->
-      <div class="filter-mobile-toggle" id="filterMobileToggle">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-          <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-          <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
-          <line x1="17" y1="16" x2="23" y2="16"/>
-        </svg>
-        <span><span data-i18n="filterOptions">滤镜选项</span></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 移动端：底部弹窗遮罩 -->
-  <div class="filter-mobile-backdrop" id="filterMobileBackdrop"></div>
-</section><!-- end #page-filter -->
-
-<!-- ==================== Page: 个人中心 ==================== -->
-<section class="page-section" id="page-profile" data-page="profile">
-  <main class="page-main profile-main">
-    <div class="profile-container">
-      <div class="profile-header">
-        <!-- <div class="profile-avatar-wrap">
-          <div class="profile-avatar" id="profileAvatar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2L3 8.5v7L12 22l9-6.5v-7L12 2z"/>
-              <path d="M12 2v20M3 8.5l9 6.5 9-6.5"/>
-            </svg>
-          </div>
-        </div> -->
-        <h1 class="profile-name" id="profileName">Young__Yang</h1>
-        <p class="profile-bio" id="profileBio" data-i18n="profileBio">Hash-Accelerated Bilateral Filtering</p>
-      </div>
-      <div class="profile-body" id="profileBody">
-        <!-- 统计卡片 -->
-        <div class="profile-section">
-          <h3 class="profile-section-title"><span data-i18n="statTitle">使用统计</span></h3>
-          <div class="profile-stats">
-            <div class="stat-card">
-              <!-- <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
-              </svg> -->
-              <span class="stat-value" id="statDenoise">0</span>
-              <span class="stat-label" data-i18n="statDenoise">图像降噪</span>
-            </div>
-            <div class="stat-card">
-              <!-- <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94"/>
-              </svg> -->
-              <span class="stat-value" id="statFilter">0</span>
-              <span class="stat-label" data-i18n="statFilter">创意滤镜</span>
-            </div>
-            <div class="stat-card">
-              <!-- <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg> -->
-              <span class="stat-value" id="statTicket">0</span>
-              <span class="stat-label" data-i18n="statTicket">旅行票根</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 设置 -->
-        <div class="profile-section">
-          <h3 class="profile-section-title"><span data-i18n="settingsTitle">偏好设置</span></h3>
-          <div class="settings-list">
-            <div class="settings-item" id="themeToggle">
-              <div class="settings-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                </svg>
-              </div>
-              <div class="settings-info">
-                <div class="settings-name" data-i18n="settingDarkMode">深色模式</div>
-                <div class="settings-desc"><span data-i18n="darkModeAuto">跟随系统</span></div>
-              </div>
-              <div class="settings-toggle">
-                <div class="toggle-knob"></div>
-              </div>
-            </div>
-            <div class="settings-item" id="vibrateToggle">
-              <div class="settings-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 10v4M22 10v4M6 6v12M18 6v12M10 4v16M14 4v16"/>
-                </svg>
-              </div>
-              <div class="settings-info">
-                <div class="settings-name" data-i18n="vibrateTitle">震动反馈</div>
-                <div class="settings-desc" data-i18n="vibrateOn">已开启</div>
-              </div>
-              <span class="settings-tag"><span data-i18n="vibrateiOS">iOS设备暂不支持</span></span>
-              <div class="settings-toggle active">
-                <div class="toggle-knob"></div>
-              </div>
-            </div>
-            <div class="settings-item" id="langToggle">
-              <div class="settings-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="2" y1="12" x2="22" y2="12"/>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                </svg>
-              </div>
-              <div class="settings-info">
-                <div class="settings-name" data-i18n="langTitle">语言 / Language</div>
-                <div class="settings-desc"><span data-i18n="langZh">中文</span></div>
-              </div>
-              <div class="settings-toggle active">
-                <div class="toggle-knob"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 关于项目 -->
-        <div class="profile-section">
-          <h3 class="profile-section-title"><span data-i18n="aboutTitle">关于项目</span></h3>
-          <div class="about-card">
-            <div class="about-row">
-              <span class="about-label" data-i18n="aboutLabelName">项目名称</span>
-              <span class="about-value" data-i18n="aboutName">PrismDen · 棱镜降噪</span>
-            </div>
-            <div class="about-row">
-              <span class="about-label" data-i18n="aboutLabelAlgo">核心算法</span>
-              <span class="about-value" data-i18n="aboutAlgo">哈希加速双边滤波</span>
-            </div>
-            <div class="about-row">
-              <span class="about-label" data-i18n="featDS">数据结构</span>
-              <span class="about-value" data-i18n="aboutDS">HashMap · LinkedList · MaxHeap · Queue</span>
-            </div>
-            <div class="about-row">
-              <span class="about-label" data-i18n="aboutLabelTech">技术栈</span>
-              <span class="about-value" data-i18n="aboutTech">C++ · WebAssembly · 液态玻璃 UI</span>
-            </div>
-            <div class="about-row">
-              <span class="about-label" data-i18n="aboutLabelAuthor">作者</span>
-              <span class="about-value" data-i18n="aboutAuthor">Young__Yang</span>
-            </div>
-            <div class="about-row">
-              <span class="about-label" data-i18n="aboutLabelVersion">版本</span>
-              <span class="about-value">v1.1.3</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 数据管理 -->
-        <div class="profile-section">
-          <h3 class="profile-section-title"><span data-i18n="dataTitle">数据管理</span></h3>
-          <button class="profile-action-btn" id="clearDataBtn" data-i18n="btnClearData">清除本地使用统计</button>
-        </div>
-      </div>
-    </div>
-  </main>
-</section><!-- end #page-profile -->
-
-<!-- 底部版权（固定底部，不撑开高度） -->
-<div class="site-footer" data-i18n="footer">© 2026 Young__Yang. All rights reserved.</div>
-
-<!-- ==================== Global Overlays ==================== -->
-
-<!-- Toast -->
-<div class="toast-container" id="toastContainer">
-  <div class="toast hidden" id="toast"></div>
-</div>
-
-<!-- Compare Overlay -->
-<div class="compare-overlay hidden" id="compareOverlay">
-  <div class="compare-container" id="compareContainer">
-    <canvas id="compareOriginal" class="compare-canvas"></canvas>
-    <div class="compare-result-wrap" id="compareResultWrap">
-      <canvas id="compareResult" class="compare-canvas"></canvas>
-    </div>
-    <div class="compare-divider" id="compareDivider"></div>
-    <span class="compare-badge badge-left"><span data-i18n="compareOriginal">原图</span></span>
-    <span class="compare-badge badge-right"><span data-i18n="compareResult">降噪后</span></span>
-    <button class="compare-close" onclick="closeCompare()">&times;</button>
-  </div>
-</div>
-
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" async></script>
-<script src="i18n.js"></script>
-<script src="main.js"></script>
-<script src="filter.js"></script>
-<script src="profile.js"></script>
-<!-- ticket.js 的功能已整合到 main.js 的 ticket IIFE 中，此处不再单独加载 -->
-</body>
-</html>
+      if (!nested) els.push(el);
+    }
+
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      var key = el.getAttribute('data-i18n');
+      var entry = dict[key];
+      if (!entry) continue;
+
+      var text = entry[lang] || entry.zh || '';
+
+      // 判断是用 textContent 还是 innerHTML
+      var isHTML = el.getAttribute('data-i18n-html') === 'true';
+      if (isHTML) {
+        el.innerHTML = text;
+      } else {
+        if (text.indexOf('<') !== -1) {
+          el.innerHTML = text;
+        } else {
+          el.textContent = text;
+        }
+      }
+    }
+
+    // 更新 html lang 属性
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+
+    // 更新 title
+    document.title = lang === 'en'
+      ? 'PrismDen — Image Denoising'
+      : 'PrismDen — 图像降噪';
+
+    // 同步个人中心动态文本（深色模式、震动、语言）
+    syncProfileDescs();
+
+    // 语言切换后 nav-links 文本宽度变化，重新校准液态玻璃 pill
+    if (typeof repositionNavPill === 'function') {
+      requestAnimationFrame(repositionNavPill);
+    }
+  }
+
+  /* 同步个人中心动态文本 */
+  function syncProfileDescs() {
+    // 深色模式状态
+    var themeItem = document.getElementById('themeToggle');
+    if (themeItem) {
+      var toggle = themeItem.querySelector('.settings-toggle');
+      var isDark = toggle && toggle.classList.contains('active');
+      var desc = themeItem.querySelector('.settings-desc');
+      if (desc) {
+        var saved = localStorage.getItem('prismden_theme');
+        if (saved) {
+          desc.textContent = isDark ? t('darkModeOn') : t('darkModeOff');
+        } else {
+          desc.textContent = t('darkModeAuto');
+        }
+      }
+    }
+
+    // 震动反馈状态
+    var vibItem = document.getElementById('vibrateToggle');
+    if (vibItem) {
+      var toggle = vibItem.querySelector('.settings-toggle');
+      var enabled = toggle && toggle.classList.contains('active');
+      var desc = vibItem.querySelector('.settings-desc');
+      if (desc && !vibItem.querySelector('.settings-tag')) {
+        desc.textContent = enabled ? t('vibrateOn') : t('vibrateOff');
+      }
+    }
+
+    // 语言状态
+    var langItem = document.getElementById('langToggle');
+    if (langItem) {
+      var toggle = langItem.querySelector('.settings-toggle');
+      var isZh = toggle && toggle.classList.contains('active');
+      var desc = langItem.querySelector('.settings-desc');
+      if (desc) {
+        desc.textContent = isZh ? t('langZh') : t('langEn');
+      }
+    }
+  }
+
+  /* —— 切换语言并持久化 —— */
+  function setLang(lang) {
+    if (lang !== 'zh' && lang !== 'en') return;
+    try { localStorage.setItem('prismden_lang', lang); } catch (e) {}
+    applyLang(lang);
+  }
+
+  /* —— 初始化：读取偏好并应用 —— */
+  function init() {
+    var saved = 'zh';
+    try { saved = localStorage.getItem('prismden_lang') || 'zh'; } catch (e) {}
+    applyLang(saved);
+  }
+
+  // 暴露 API
+  return {
+    t: t,
+    setLang: setLang,
+    getLang: function () { return currentLang; },
+    init: init,
+    applyLang: applyLang
+  };
+
+})();
+
+// 页面加载后自动初始化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', i18n.init);
+} else {
+  i18n.init();
+}
