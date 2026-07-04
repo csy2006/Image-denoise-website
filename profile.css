@@ -1,0 +1,466 @@
+/* ==================== 个人中心样式 ==================== */
+
+/* —— 页面主容器 —— */
+.profile-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* —— 卡片容器 —— */
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* —— 头部：头像 + 名称 —— */
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1.5rem 2rem;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.6));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.4));
+  border-radius: var(--radius-lg, 20px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* —— 头像 —— */
+.profile-avatar-wrap {
+  position: relative;
+}
+
+.profile-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(232, 81, 10, 0.12), rgba(196, 104, 58, 0.04));
+  border: 2px solid rgba(232, 81, 10, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--orange, #E8510A);
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-avatar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), transparent 60%);
+  pointer-events: none;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* —— 名称 & 简介 —— */
+.profile-name {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ink, #141210);
+  margin: 0;
+}
+
+.profile-bio {
+  font-size: 0.88rem;
+  color: var(--ink-faded, #6B6760);
+  margin: 0;
+  text-align: center;
+}
+
+/* —— 统计卡片 —— */
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.2rem 0.5rem;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.5));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.3));
+  border-radius: 16px;
+  transition: transform 0.2s ease;
+}
+
+.stat-card:active {
+  transform: scale(0.96);
+}
+
+.stat-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--orange, #E8510A);
+  opacity: 0.85;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink, #141210);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--ink-faded, #A8A49C);
+}
+
+/* —— 分区标题 —— */
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-faded, #6B6760);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+  padding-left: 0.25rem;
+}
+
+/* —— 设置列表 —— */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--glass-border, rgba(0, 0, 0, 0.06));
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.6));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.settings-item:active {
+  background: var(--glass-bg, rgba(255, 255, 255, 0.8));
+}
+
+.settings-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(232, 81, 10, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--orange, #E8510A);
+}
+
+.settings-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-name {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--ink, #141210);
+}
+
+.settings-desc {
+  font-size: 0.75rem;
+  color: var(--ink-faded, #A8A49C);
+  margin-top: 0.15rem;
+}
+
+/* —— 提示标签（如 iOS设备暂不支持）—— */
+.settings-tag {
+  font-size: 0.65rem;
+  color: var(--ink-faded, #A8A49C);
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .settings-tag {
+  background: rgba(255, 255, 255, 0.06);
+  color: #A8A49C;
+}
+
+/* —— 开关组件 —— */
+.settings-toggle {
+  width: 46px;
+  height: 26px;
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.15);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.25s ease;
+  cursor: pointer;
+}
+
+.settings-toggle.active {
+  background: var(--orange, #E8510A);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.25s ease;
+}
+
+.settings-toggle.active .toggle-knob {
+  transform: translateX(20px);
+}
+
+/* —— 关于项目卡片 —— */
+.about-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--glass-border, rgba(0, 0, 0, 0.06));
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.about-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.85rem 1.1rem;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.6));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.about-label {
+  font-size: 0.82rem;
+  color: var(--ink-faded, #A8A49C);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.about-value {
+  font-size: 0.85rem;
+  color: var(--ink, #141210);
+  text-align: right;
+  word-break: break-word;
+}
+
+/* —— 操作按钮 —— */
+.profile-action-btn {
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #d32f2f;
+  background: rgba(211, 47, 47, 0.06);
+  border: 1px solid rgba(211, 47, 47, 0.15);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.profile-action-btn:active {
+  background: rgba(211, 47, 47, 0.12);
+}
+
+/* ==================== 深色模式 ==================== */
+[data-theme="dark"] .profile-header,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .settings-item,
+[data-theme="dark"] .about-row {
+  background: rgba(30, 28, 26, 0.6);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .settings-list,
+[data-theme="dark"] .about-card {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .profile-avatar {
+  background: linear-gradient(135deg, rgba(232, 81, 10, 0.2), rgba(196, 104, 58, 0.08));
+  border-color: rgba(232, 81, 10, 0.28);
+  color: var(--orange, #E8510A);
+}
+
+[data-theme="dark"] .profile-name {
+  color: var(--ink-dark, #F5F3EF);
+}
+
+[data-theme="dark"] .profile-bio,
+[data-theme="dark"] .settings-desc,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .about-label {
+  color: #A8A49C;
+}
+
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] .settings-name,
+[data-theme="dark"] .about-value {
+  color: var(--ink-dark, #F5F3EF);
+}
+
+[data-theme="dark"] .settings-icon {
+  background: rgba(232, 81, 10, 0.12);
+}
+
+[data-theme="dark"] .settings-toggle {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .settings-toggle.active {
+  background: var(--orange, #E8510A);
+}
+
+[data-theme="dark"] .profile-action-btn {
+  background: rgba(211, 47, 47, 0.1);
+  border-color: rgba(211, 47, 47, 0.2);
+  color: #ef5350;
+}
+
+/* ==================== 移动端适配 ==================== */
+@media (max-width: 900px) {
+  .profile-main {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .profile-header {
+    padding: 2rem 1rem 1.5rem;
+  }
+
+  .profile-avatar {
+    width: 76px;
+    height: 76px;
+  }
+
+  .profile-name {
+    font-size: 1.2rem;
+  }
+
+  .stat-card {
+    padding: 1rem 0.4rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .stat-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-main {
+    padding: 1rem 0.75rem 2.5rem;
+  }
+
+  .profile-header {
+    padding: 1.5rem 0.75rem 1.25rem;
+    gap: 0.5rem;
+  }
+
+  .profile-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .profile-name {
+    font-size: 1.1rem;
+  }
+
+  .profile-bio {
+    font-size: 0.8rem;
+  }
+
+  .profile-stats {
+    gap: 0.5rem;
+  }
+
+  .stat-card {
+    padding: 0.8rem 0.3rem;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+  }
+
+  .stat-label {
+    font-size: 0.68rem;
+  }
+
+  .stat-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .settings-item {
+    padding: 0.85rem 0.9rem;
+    gap: 0.7rem;
+  }
+
+  .settings-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .settings-name {
+    font-size: 0.85rem;
+  }
+
+  .settings-desc {
+    font-size: 0.7rem;
+  }
+
+  .about-row {
+    padding: 0.75rem 0.9rem;
+  }
+
+  .about-label {
+    font-size: 0.76rem;
+  }
+
+  .about-value {
+    font-size: 0.78rem;
+  }
+}

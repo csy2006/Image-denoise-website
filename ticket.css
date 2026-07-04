@@ -1,0 +1,756 @@
+/* ==================== 票根页面布局 ==================== */
+
+/* 页面容器：紧贴导航栏，禁止滚动 */
+#page-ticket {
+  overflow: hidden !important;
+}
+
+.ticket-page {
+  display: flex;
+  min-height: 100%;
+  gap: 0;
+}
+
+/* ==================== 左侧面板 ==================== */
+.ticket-panel {
+  width: 420px;
+  min-width: 420px;
+  padding: 2rem 2rem;
+  background: var(--warm-white);
+  border-right: 1px solid var(--orange-border);
+  overflow-y: auto;
+  max-height: calc(100vh - var(--navbar-h, 54px));
+  position: sticky;
+  top: var(--navbar-h, 54px);
+}
+
+.ticket-panel-header {
+  margin-bottom: 1.75rem;
+}
+
+.ticket-panel-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.ticket-panel-subtitle {
+  font-size: 0.875rem;
+  color: var(--ink-faded);
+  font-weight: 300;
+}
+
+/* ==================== 上传区域 ==================== */
+.upload-zone {
+  border: 2px dashed var(--orange-border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--orange-ghost);
+  margin-bottom: 1.5rem;
+}
+
+.upload-zone:hover {
+  border-color: var(--orange);
+  background: rgba(196,104,58,0.1);
+}
+
+.upload-zone.drag-over {
+  border-color: var(--orange);
+  background: rgba(196,104,58,0.12);
+}
+
+.upload-icon {
+  color: var(--orange);
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.upload-text {
+  font-size: 0.95rem;
+  color: var(--ink-light);
+}
+
+.upload-link {
+  color: var(--orange);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.upload-hint {
+  font-size: 0.75rem;
+  color: var(--ink-faded);
+  margin-top: 0.5rem;
+}
+
+/* ==================== 编辑器 ==================== */
+.ticket-editor {
+  animation: fadeSlideIn 0.4s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.editor-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--orange-border);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink-faded);
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--sand);
+  border-radius: var(--radius-sm);
+  background: var(--warm-white);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px var(--orange-ghost);
+}
+
+.form-input[readonly] {
+  background: var(--cream);
+  cursor: default;
+}
+
+.form-hint {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--ink-faded);
+  margin-top: 0.25rem;
+}
+
+.btn-regenerate {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--orange-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--orange);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-regenerate:hover {
+  background: var(--orange);
+  color: #fff;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 0.7rem 1.25rem;
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.btn-primary:hover {
+  background: var(--orange-dark);
+}
+
+.btn-secondary {
+  padding: 0.7rem 1.25rem;
+  background: transparent;
+  color: var(--ink-light);
+  border: 1.5px solid var(--sand);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-secondary:hover {
+  border-color: var(--ink-faded);
+  color: var(--ink);
+}
+
+/* ==================== 右侧预览区 ==================== */
+.ticket-preview-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--cream);
+  min-height: calc(100vh - var(--navbar-h, 54px));
+}
+
+.preview-placeholder {
+  text-align: center;
+  color: var(--ink-faded);
+}
+
+.placeholder-content p {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--stone);
+}
+
+/* ==================== 票根容器 ==================== */
+.ticket-container {
+  width: 100%;
+  max-width: 820px;
+  display: flex;
+  justify-content: center;
+  padding-right: 16px;  /* 给撕边效果留空间 */
+}
+
+/* ==================== 票根 ==================== */
+/*
+  字体缩放策略：
+  - 所有文字大小使用 vw + clamp()，直接随视口/票根宽度等比缩放
+  - 设计基准：960px 宽度 → 参考图效果（Image 5/6）
+  - 窄屏自动缩小，宽屏不超过设计值
+  - base font-size 仅用于 em 间距计算（padding/margin），固定不变
+*/
+.ticket {
+  display: flex;
+  border-radius: var(--radius-lg, 0);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+  position: relative;
+  background: #fff;
+  overflow: hidden;
+  font-size: 14px;  /* 固定基准，仅用于 spacing 的 em 计算 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* 横向布局 —— padding-bottom hack 锁定长宽比（兼容微信） */
+.ticket.layout-horizontal {
+  flex-direction: row;
+  width: 100%;
+  height: 0;
+  padding-bottom: 41.6667%;   /* 400/960 */
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket.layout-horizontal .ticket-photo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 71.43%;
+  border-radius: 0;
+}
+
+.ticket.layout-horizontal .ticket-info {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 28.57%;
+  border-radius: 0;
+}
+
+/* 竖向布局 */
+.ticket.layout-vertical {
+  flex-direction: column;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.ticket.layout-vertical .ticket-photo {
+  width: 100%;
+  border-radius: 0;
+}
+
+.ticket.layout-vertical .ticket-info {
+  width: 100%;
+  border-radius: 0;
+}
+
+/* ==================== 票根照片区域 ==================== */
+.ticket-photo {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+}
+
+.ticket-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ==================== 票根信息区域 ==================== */
+.ticket-info {
+  position: relative;
+  padding: 1.8em 1.5em;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+/* ==================== 撕票边缘效果（整体右边缘） ==================== */
+/* 用 clip-path 给整个票根右边缘加不规则撕口 */
+.ticket-inner {
+  width: 100%;
+  position: relative;
+}
+
+.ticket::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 8px;
+  bottom: 8px;
+  width: 22px;
+  background: var(--cream);
+  z-index: 5;
+  pointer-events: none;
+  /* 锯齿撕口 — 半圆齿孔 */
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 400' preserveAspectRatio='none'%3E%3Crect width='22' height='400' fill='white'/%3E%3Ccircle cx='0' cy='18' r='9' fill='black'/%3E%3Ccircle cx='0' cy='54' r='9' fill='black'/%3E%3Ccircle cx='0' cy='90' r='9' fill='black'/%3E%3Ccircle cx='0' cy='126' r='9' fill='black'/%3E%3Ccircle cx='0' cy='162' r='9' fill='black'/%3E%3Ccircle cx='0' cy='198' r='9' fill='black'/%3E%3Ccircle cx='0' cy='234' r='9' fill='black'/%3E%3Ccircle cx='0' cy='270' r='9' fill='black'/%3E%3Ccircle cx='0' cy='306' r='9' fill='black'/%3E%3Ccircle cx='0' cy='342' r='9' fill='black'/%3E%3Ccircle cx='0' cy='378' r='9' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 400' preserveAspectRatio='none'%3E%3Crect width='22' height='400' fill='white'/%3E%3Ccircle cx='0' cy='18' r='9' fill='black'/%3E%3Ccircle cx='0' cy='54' r='9' fill='black'/%3E%3Ccircle cx='0' cy='90' r='9' fill='black'/%3E%3Ccircle cx='0' cy='126' r='9' fill='black'/%3E%3Ccircle cx='0' cy='162' r='9' fill='black'/%3E%3Ccircle cx='0' cy='198' r='9' fill='black'/%3E%3Ccircle cx='0' cy='234' r='9' fill='black'/%3E%3Ccircle cx='0' cy='270' r='9' fill='black'/%3E%3Ccircle cx='0' cy='306' r='9' fill='black'/%3E%3Ccircle cx='0' cy='342' r='9' fill='black'/%3E%3Ccircle cx='0' cy='378' r='9' fill='black'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+}
+
+/* 横向布局的交界齿孔线 */
+.ticket.layout-horizontal .ticket-info::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 10px;
+  bottom: 10px;
+  width: 12px;
+  background: inherit;
+  z-index: 1;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 200' preserveAspectRatio='none'%3E%3Ccircle cx='6' cy='15' r='5' fill='black'/%3E%3Ccircle cx='6' cy='45' r='5' fill='black'/%3E%3Ccircle cx='6' cy='75' r='5' fill='black'/%3E%3Ccircle cx='6' cy='105' r='5' fill='black'/%3E%3Ccircle cx='6' cy='135' r='5' fill='black'/%3E%3Ccircle cx='6' cy='165' r='5' fill='black'/%3E%3Ccircle cx='6' cy='195' r='5' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 200' preserveAspectRatio='none'%3E%3Ccircle cx='6' cy='15' r='5' fill='black'/%3E%3Ccircle cx='6' cy='45' r='5' fill='black'/%3E%3Ccircle cx='6' cy='75' r='5' fill='black'/%3E%3Ccircle cx='6' cy='105' r='5' fill='black'/%3E%3Ccircle cx='6' cy='135' r='5' fill='black'/%3E%3Ccircle cx='6' cy='165' r='5' fill='black'/%3E%3Ccircle cx='6' cy='195' r='5' fill='black'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* 竖向布局的交界齿孔线 */
+.ticket.layout-vertical .ticket-info::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  right: 15px;
+  top: -6px;
+  height: 12px;
+  background: inherit;
+  z-index: 1;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Ccircle cx='15' cy='6' r='5' fill='black'/%3E%3Ccircle cx='50' cy='6' r='5' fill='black'/%3E%3Ccircle cx='85' cy='6' r='5' fill='black'/%3E%3Ccircle cx='120' cy='6' r='5' fill='black'/%3E%3Ccircle cx='155' cy='6' r='5' fill='black'/%3E%3Ccircle cx='190' cy='6' r='5' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Ccircle cx='15' cy='6' r='5' fill='black'/%3E%3Ccircle cx='50' cy='6' r='5' fill='black'/%3E%3Ccircle cx='85' cy='6' r='5' fill='black'/%3E%3Ccircle cx='120' cy='6' r='5' fill='black'/%3E%3Ccircle cx='155' cy='6' r='5' fill='black'/%3E%3Ccircle cx='190' cy='6' r='5' fill='black'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+}
+
+/* ==================== 艺术字 ==================== */
+/* 所有字号用 vw + clamp 直接随票根宽度等比缩放，不再依赖 base font-size 的 em 级联 */
+.ticket-destination-en {
+  font-family: 'Playfair Display', 'Cormorant Garamond', 'Georgia', serif;
+  font-size: clamp(18px, 3.4vw, 38px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  margin-bottom: 0.25em;
+  white-space: nowrap;
+}
+
+.ticket-destination-cn {
+  font-family: 'Noto Serif SC', 'STSong', serif;
+  font-size: clamp(10px, 1.4vw, 15px);
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 0.8em;
+  white-space: nowrap;
+}
+
+/* 分隔线 */
+.ticket-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255,255,255,0.25);
+  margin: 0.8em 0;
+}
+
+/* 日期 */
+.ticket-date {
+  font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+  font-size: clamp(11px, 1.7vw, 19px);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.2em;
+}
+
+/* 旅行者 */
+.ticket-traveler {
+  font-family: 'Playfair Display', 'Cormorant Garamond', serif;
+  font-size: clamp(11px, 1.55vw, 17px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.85);
+}
+
+/* 票号 */
+.ticket-number {
+  font-family: 'DM Sans', monospace;
+  font-size: clamp(9px, 1.15vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.6);
+  text-align: left;
+}
+
+/* 防伪码 */
+.ticket-code {
+  font-family: 'DM Sans', monospace;
+  font-size: clamp(8px, 1vw, 11px);
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.5);
+  margin-top: 0.25em;
+  text-align: left;
+}
+
+/* 条码区域 */
+.ticket-barcode {
+  margin-top: auto;
+  padding-top: 0.6em;
+  text-align: left;
+}
+
+.ticket-barcode svg {
+  width: 100%;
+  height: auto;
+  min-height: clamp(24px, 3vw, 40px);
+}
+
+/* 信息区底部装饰 */
+.ticket-info-footer {
+  margin-top: auto;
+  text-align: left;
+}
+
+.ticket-info-top {
+  /* 上部信息 */
+}
+
+/* ==================== 竖向布局调整 ==================== */
+.ticket.layout-vertical .ticket-photo {
+  max-height: 55vh;
+}
+
+.ticket.layout-vertical .ticket-info {
+  min-height: 160px;
+  padding: 1.5em 1.8em;
+}
+
+.ticket.layout-vertical .ticket-destination-en {
+  font-size: clamp(18px, 3.4vw, 32px);
+}
+
+/* ==================== 移动端适配 ==================== */
+/*
+  核心：票根长宽比始终不变(960:400)，所有文字用 vw+clamp 自动等比缩放。
+  此处只处理两件事：
+  1. 布局调整（面板方向、padding 等）
+  2. 禁用 mask-image 齿孔（微信 X5/TBS 不兼容 → 渲染为白色实心块遮盖信息区）
+*/
+@media (max-width: 900px) {
+  .ticket-page {
+    flex-direction: column;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ticket-panel {
+    width: 100%;
+    min-width: unset;
+    position: static;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--orange-border);
+    padding: 1.5rem;
+  }
+
+  .ticket-preview-area {
+    padding: 1rem;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: visible !important;
+  }
+
+  /* ===== 主页面票根：宽度适配屏幕，不旋转 ===== */
+  .ticket-container {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 0;
+    margin: 0 auto;
+  }
+
+  .ticket.layout-horizontal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0;
+  }
+
+  /* 禁用 mask-image 齿孔装饰 — 微信 X5/TBS 不兼容 */
+  .ticket::after { display: none !important; }
+  .ticket.layout-horizontal .ticket-info::before { display: none !important; }
+  .ticket.layout-vertical .ticket-info::before { display: none !important; }
+
+  /* ---- info区文字 — 宽度适配屏幕后用 vw 等比缩放 ---- */
+  .ticket.layout-horizontal .ticket-info {
+    padding: 0.8em 0.8em !important;
+    justify-content: flex-start !important;
+  }
+  .ticket.layout-horizontal .ticket-destination-en {
+    font-size: clamp(12px, 4.2vw, 22px) !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.04em !important;
+    margin-bottom: 0.1em !important;
+    white-space: nowrap !important;
+  }
+  .ticket.layout-horizontal .ticket-destination-cn {
+    font-size: clamp(8px, 2vw, 13px) !important;
+    margin-bottom: 0.4em !important;
+    letter-spacing: 0.1em !important;
+    white-space: nowrap !important;
+  }
+  .ticket.layout-horizontal .ticket-divider {
+    margin: 0.3em 0 !important;
+  }
+  .ticket.layout-horizontal .ticket-date {
+    font-size: clamp(9px, 2.4vw, 15px) !important;
+    margin-bottom: 0.1em !important;
+  }
+  .ticket.layout-horizontal .ticket-traveler {
+    font-size: clamp(9px, 2.2vw, 14px) !important;
+  }
+  .ticket.layout-horizontal .ticket-number {
+    font-size: clamp(7px, 1.8vw, 11px) !important;
+  }
+  .ticket.layout-horizontal .ticket-code {
+    font-size: clamp(7px, 1.7vw, 10px) !important;
+  }
+
+  /* ===== 弹窗内票根预览：宽度适配，不旋转 ===== */
+  .ticket-sheet-preview {
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+  .ticket-sheet-preview-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-faded);
+    margin-bottom: 0.5rem;
+  }
+  .ticket-sheet-preview-inner {
+    width: 100%;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+  }
+  .ticket-sheet-preview-inner .ticket {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+  }
+  /* 弹窗预览内票根文字 */
+  .ticket-sheet-preview-inner .ticket-info {
+    padding: 0.5em 0.5em !important;
+    justify-content: flex-start !important;
+  }
+  .ticket-sheet-preview-inner .ticket-destination-en {
+    font-size: clamp(10px, 3.5vw, 16px) !important;
+    margin-bottom: 0.05em;
+    line-height: 1 !important;
+    letter-spacing: 0.04em !important;
+    white-space: nowrap !important;
+  }
+  .ticket-sheet-preview-inner .ticket-destination-cn {
+    font-size: clamp(7px, 1.8vw, 10px) !important;
+    margin-bottom: 0.2em;
+    letter-spacing: 0.08em !important;
+    white-space: nowrap !important;
+  }
+  .ticket-sheet-preview-inner .ticket-divider {
+    margin: 0.15em 0 !important;
+  }
+  .ticket-sheet-preview-inner .ticket-date {
+    font-size: clamp(8px, 2vw, 12px) !important;
+  }
+  .ticket-sheet-preview-inner .ticket-traveler {
+    font-size: clamp(8px, 1.9vw, 11px) !important;
+  }
+  .ticket-sheet-preview-inner .ticket-number {
+    font-size: clamp(6px, 1.5vw, 9px) !important;
+  }
+  .ticket-sheet-preview-inner .ticket-code {
+    font-size: clamp(6px, 1.4vw, 8px) !important;
+  }
+  .ticket-sheet-preview-inner .ticket-info-footer {
+    text-align: left !important;
+    margin-top: auto !important;
+  }
+  .ticket-sheet-preview-inner .ticket-barcode {
+    padding-top: 0.15em;
+    text-align: left !important;
+  }
+  .ticket-sheet-preview-inner .ticket-barcode svg {
+    min-height: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ticket-panel {
+    padding: 1rem;
+  }
+
+  .ticket-panel-title {
+    font-size: 1.5rem;
+  }
+
+  .ticket-preview-area {
+    padding: 1rem;
+  }
+
+  .upload-zone {
+    padding: 1.5rem 1rem;
+  }
+
+  .editor-actions {
+    flex-direction: column;
+  }
+  /* 字号已由 vw+clamp 自动处理，无需额外覆盖 */
+}
+
+/* ==================== 横屏适配 ==================== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .ticket-page {
+    flex-direction: row;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .ticket-panel {
+    width: 320px;
+    min-width: 320px;
+    max-height: 100vh;
+    overflow-y: auto;
+    position: relative;
+    border-right: 1px solid var(--orange-border);
+    border-bottom: none;
+  }
+
+  .ticket-preview-area {
+    flex: 1;
+    min-height: auto;
+    padding: 0.5rem;
+    overflow-y: auto;
+  }
+
+  .ticket-container {
+    max-width: 100%;
+    padding-right: 8px;
+    width: 100%;
+    height: auto;
+  }
+
+  /* 横屏不旋转票根 */
+  .ticket.layout-horizontal {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    transform: none !important;
+  }
+
+  /* 横屏禁用 mask-image 齿孔（微信内核不兼容） */
+  .ticket::after { display: none !important; }
+  .ticket.layout-horizontal .ticket-info::before { display: none !important; }
+
+  /* 横屏弹窗预览不旋转 */
+  .ticket-sheet-preview-inner {
+    width: 100%;
+    height: auto;
+  }
+  .ticket-sheet-preview-inner .ticket {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    transform: none !important;
+  }
+
+  .ticket-barcode {
+    padding-top: 0.3em;
+  }
+}
+
+/* 横屏 + 窄屏组合 */
+@media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  .ticket-panel {
+    width: 280px;
+    min-width: 280px;
+    padding: 1rem;
+  }
+
+  .ticket-preview-area {
+    padding: 0.5rem;
+  }
+}

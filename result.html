@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>处理结果 — IMAGE DENOISE</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="page-inner">
+
+<!-- 背景动画 -->
+<div class="bg-animation">
+  <div class="bg-circle bg-circle-1"></div>
+  <div class="bg-circle bg-circle-2"></div>
+  <div class="bg-circle bg-circle-3"></div>
+</div>
+
+<!-- 导航栏 -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:0.6rem;color:inherit;">
+      <span class="nav-icon">&#9670;</span>
+      <span class="nav-title">IMAGE <em>DENOISE</em></span>
+    </a>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">首页</a>
+    <a class="nav-link" href="upload.html">上传处理</a>
+    <a class="nav-link active" href="result.html">处理结果</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-status" id="statusBar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">等待后端连接...</span>
+    </div>
+    <button class="nav-ping-btn" onclick="pingBackend()">检测服务</button>
+  </div>
+</nav>
+
+<!-- 页面标题 -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <h1 class="page-title">处理结果</h1>
+    <p class="page-desc">查看降噪效果，对比原图，保存成品</p>
+  </div>
+</div>
+
+<!-- 主内容区 -->
+<main class="page-main" id="mainContent">
+
+  <!-- 无结果提示 -->
+  <div class="empty-state glass-card" id="emptyState">
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+      <rect x="8" y="8" width="40" height="40" rx="6" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4"/>
+      <path d="M22 28l6 6 12-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h3>暂无处理结果</h3>
+    <p>请先前往上传处理页面导入图片并进行降噪处理</p>
+    <a href="upload.html" class="btn btn-primary" style="margin-top:1rem">去上传图片 →</a>
+  </div>
+
+  <!-- 结果展示区（有结果时显示） -->
+  <div id="resultContent" class="hidden">
+
+    <!-- 双列布局：左侧内容 + 右侧照片信息 -->
+    <div class="result-grid">
+
+      <!-- 左列：结果 + 保存 -->
+      <div class="result-left-col">
+
+        <!-- 耗时 + 参数信息 -->
+        <div class="result-info-bar glass-card" id="resultInfoBar">
+          <div class="info-item">
+            <span class="info-label">处理耗时</span>
+            <span class="info-val timing-val" id="timingVal">--</span>
+          </div>
+          <div class="info-divider"></div>
+          <div class="info-item">
+            <span class="info-label">σ<sub>s</sub> 空间半径</span>
+            <span class="info-val" id="infoSigmaS">--</span>
+          </div>
+          <div class="info-divider"></div>
+          <div class="info-item">
+            <span class="info-label">σ<sub>r</sub> 颜色阈值</span>
+            <span class="info-val" id="infoSigmaR">--</span>
+          </div>
+          <div class="info-divider"></div>
+          <div class="info-item">
+            <span class="info-label">降噪模式</span>
+            <span class="info-val" id="infoMode">--</span>
+          </div>
+        </div>
+
+        <!-- 图片展示 -->
+        <section class="content-section">
+          <div class="panel-header">
+            <span class="panel-num">01</span>
+            <h2>降噪结果</h2>
+          </div>
+
+          <div class="result-canvas-wrap glass-card">
+            <canvas id="outputCanvas" class="img-canvas-full"></canvas>
+          </div>
+
+          <div class="compare-hint" id="compareHint" onclick="openCompare()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 2L2 8L6 14M10 2L14 8L10 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            点击对比查看原图 / 处理后效果
+          </div>
+        </section>
+
+        <!-- 保存 -->
+        <section class="content-section">
+          <div class="panel-header">
+            <span class="panel-num">02</span>
+            <h2>保存图片</h2>
+          </div>
+
+          <div class="save-block glass-card" id="saveBlock">
+            <div class="save-format-row">
+              <span class="save-label">保存格式</span>
+              <div class="format-tabs">
+                <button class="fmt-tab active" data-fmt="png">PNG</button>
+                <button class="fmt-tab" data-fmt="jpeg">JPEG</button>
+                <button class="fmt-tab" data-fmt="webp">WebP</button>
+              </div>
+            </div>
+            <div id="qualityRow" style="display:none; flex-direction:column; gap:8px;">
+              <label class="param-label">压缩质量 <em id="qualityVal">92</em>%</label>
+              <input type="range" class="slider" id="qualitySlider" min="60" max="100" value="92"
+                oninput="document.getElementById('qualityVal').textContent=this.value" />
+            </div>
+            <div class="save-btns">
+              <button class="btn btn-primary" onclick="saveImage()">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M3 13H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                保存图片
+              </button>
+              <a href="upload.html" class="btn btn-cancel">处理新图片</a>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- end .result-left-col -->
+
+      <!-- 右列：照片信息 -->
+      <div class="result-right-col">
+        <div class="photo-info glass-card" id="photoInfoCard">
+          <h3 class="photo-info-title">照片信息</h3>
+
+          <div class="photo-info-section">
+            <h4 class="photo-info-subtitle">相机参数</h4>
+            <div class="photo-info-row"><span>制造商</span><span id="infoMake">--</span></div>
+            <div class="photo-info-row"><span>型号</span><span id="infoModel">--</span></div>
+            <div class="photo-info-row"><span>光圈</span><span id="infoAperture">--</span></div>
+            <div class="photo-info-row"><span>快门</span><span id="infoShutter">--</span></div>
+            <div class="photo-info-row"><span>ISO</span><span id="infoISO">--</span></div>
+            <div class="photo-info-row"><span>焦距</span><span id="infoFocal">--</span></div>
+          </div>
+
+          <div class="photo-info-divider"></div>
+
+          <div class="photo-info-section">
+            <h4 class="photo-info-subtitle">文件信息</h4>
+            <div class="photo-info-row"><span>文件大小</span><span id="infoFileSize">--</span></div>
+            <div class="photo-info-row"><span>文件格式</span><span id="infoFormat">--</span></div>
+            <div class="photo-info-row"><span>颜色空间</span><span id="infoColorSpace">--</span></div>
+          </div>
+
+          <div class="photo-info-divider"></div>
+
+          <div class="photo-info-section">
+            <h4 class="photo-info-subtitle">降噪参数</h4>
+            <div class="photo-info-row"><span>降噪模式</span><span id="infoModeDetail">--</span></div>
+            <div class="photo-info-row"><span>σs 空间半径</span><span id="infoSigmaSDetail">--</span></div>
+            <div class="photo-info-row"><span>σr 颜色阈值</span><span id="infoSigmaRDetail">--</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end .result-grid -->
+
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer">
+  <div class="toast hidden" id="toast"></div>
+</div>
+
+<!-- Compare Overlay -->
+<div class="compare-overlay hidden" id="compareOverlay">
+  <div class="compare-container" id="compareContainer">
+    <canvas id="compareOriginal" class="compare-canvas"></canvas>
+    <div class="compare-result-wrap" id="compareResultWrap">
+      <canvas id="compareResult" class="compare-canvas"></canvas>
+    </div>
+    <div class="compare-divider" id="compareDivider"></div>
+    <span class="compare-badge badge-left">原图</span>
+    <span class="compare-badge badge-right">降噪后</span>
+    <button class="compare-close" onclick="closeCompare()">&times;</button>
+  </div>
+</div>
+
+<!-- hidden stubs required by main.js -->
+<canvas id="inputCanvas" class="hidden"></canvas>
+<div id="uploadZone" class="hidden"></div>
+<div id="imgActions" class="hidden"></div>
+<div id="imgMeta" class="hidden"></div>
+<div id="progressWrap" class="hidden"></div>
+<div id="progressBar" class="hidden"></div>
+<div id="progressText" class="hidden"></div>
+<div id="timingBlock" class="hidden"></div>
+<div id="outputPlaceholder" class="hidden"></div>
+
+<script src="main.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    pingBackend();
+    setupFormatTabs();
+    setupCompareSlider();
+    loadResultFromStorage();
+  });
+
+  function loadResultFromStorage() {
+    const resultDataURL = sessionStorage.getItem('denoiseResult');
+    const resultName    = sessionStorage.getItem('denoiseResultName');
+    const timing        = sessionStorage.getItem('denoiseTiming');
+    const inputDataURL  = sessionStorage.getItem('denoiseInput');
+    const paramsRaw     = sessionStorage.getItem('denoiseParams');
+    const fileInfoRaw   = sessionStorage.getItem('denoiseFileInfo');
+
+    if (!resultDataURL) {
+      document.getElementById('emptyState').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('emptyState').classList.add('hidden');
+    document.getElementById('resultContent').classList.remove('hidden');
+
+    // Fill top bar: timing & params
+    if (timing) document.getElementById('timingVal').textContent = timing;
+    let parsedParams = null;
+    if (paramsRaw) {
+      try {
+        const p = JSON.parse(paramsRaw);
+        parsedParams = p;
+        document.getElementById('infoSigmaS').textContent = p.sigmaS;
+        document.getElementById('infoSigmaR').textContent = p.sigmaR;
+        document.getElementById('infoMode').textContent = p.mode === 'bilateral' ? '彩色双边' : '灰度 Y 通道';
+      } catch(e) {}
+    }
+
+    // Fill right column: photo info
+    fillPhotoInfo(fileInfoRaw, parsedParams);
+
+    // Draw result to outputCanvas
+    const rImg = new Image();
+    rImg.onload = () => {
+      const canvas = document.getElementById('outputCanvas');
+      canvas.width  = rImg.naturalWidth;
+      canvas.height = rImg.naturalHeight;
+      canvas.getContext('2d').drawImage(rImg, 0, 0);
+    };
+    rImg.src = resultDataURL;
+
+    // Store resultBlob for save
+    fetch(resultDataURL)
+      .then(r => r.blob())
+      .then(blob => {
+        resultBlob = blob;
+        resultFileName = resultName;
+        // Also paint inputCanvas for comparison
+        if (inputDataURL) {
+          const iImg = new Image();
+          iImg.onload = () => {
+            const ic = document.getElementById('inputCanvas');
+            ic.width  = iImg.naturalWidth;
+            ic.height = iImg.naturalHeight;
+            ic.getContext('2d').drawImage(iImg, 0, 0);
+          };
+          iImg.src = inputDataURL;
+        }
+        // Activate compare hint
+        document.getElementById('compareHint').style.display = 'flex';
+        setupCompareImages();
+      });
+  }
+
+  // 填充右侧照片信息栏
+  function fillPhotoInfo(fileInfoRaw, params) {
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = val || '--';
+      // 隐藏空值行
+      const row = el.parentElement;
+      if (row && val === '--') row.classList.add('hidden-row');
+      else if (row) row.classList.remove('hidden-row');
+    };
+
+    let fileInfo = null;
+    if (fileInfoRaw) {
+      try { fileInfo = JSON.parse(fileInfoRaw); } catch(e) {}
+    }
+
+    // 相机参数
+    if (fileInfo && fileInfo.exif) {
+      const e = fileInfo.exif;
+      setVal('infoMake', e.make !== '--' ? e.make : '--');
+      setVal('infoModel', e.model !== '--' ? e.model : '--');
+      setVal('infoAperture', fmtExifForDisplay(e.aperture));
+      setVal('infoShutter', fmtExifForDisplay(e.shutter));
+      setVal('infoISO', e.iso !== '--' ? ('ISO ' + e.iso) : '--');
+      setVal('infoFocal', fmtExifForDisplay(e.focal));
+    }
+
+    // 文件信息
+    if (fileInfo) {
+      setVal('infoFileSize', formatBytesForDisplay(fileInfo.size));
+      setVal('infoFormat', (fileInfo.ext || '--').toUpperCase());
+      const ext = (fileInfo.ext || '').toLowerCase();
+      let cs = 'RGB';
+      if (['png','jpg','jpeg','webp'].includes(ext)) cs = 'RGB / sRGB';
+      else if (ext === 'raw') cs = 'RAW';
+      setVal('infoColorSpace', cs);
+    }
+
+    // 降噪参数（右侧详情）
+    if (params) {
+      setVal('infoModeDetail', params.mode === 'bilateral' ? '彩色双边' : params.mode === 'grayscale_bilateral' ? '灰度 Y 通道' : '--');
+      setVal('infoSigmaSDetail', params.sigmaS || '--');
+      setVal('infoSigmaRDetail', params.sigmaR || '--');
+    }
+  }
+
+  // 格式化 EXIF 值供显示用
+  function fmtExifForDisplay(val) {
+    if (!val || val === '--') return '--';
+    return String(val);
+  }
+
+  // 格式化字节数
+  function formatBytesForDisplay(bytes) {
+    if (!bytes) return '--';
+    bytes = Number(bytes);
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+</script>
+</body>
+</html>

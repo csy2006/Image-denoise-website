@@ -1,0 +1,1085 @@
+/**
+ * IMAGE DENOISE — Frontend Main Script (SPA)
+ * Connects to C++ backend via HTTP API
+ * Supports: PNG, JPG, JPEG, RAW, BMP, TIFF, WebP
+ */
+
+const API_BASE = 'http://localhost:8080';
+
+// State
+let currentFile = null;
+let resultBlob = null;
+let resultFileName = null;
+let currentMode = 'bilateral';
+let startTime = 0;
+let currentPage = 'home';
+
+// ======================= Init =======================
+
+document.addEventListener('DOMContentLoaded', () => {
+  initNavPill();
+  initNavLinks();
+  initFireworks();
+  setupDragDrop();
+  setupFileInput();
+  setupFormatTabs();
+  setupModePill();
+  setupCompareSlider();
+  initCustomSliders();
+  initMouseTilt();
+  pingBackend();
+});
+
+// ======================= Page Switching (SPA) =======================
+
+const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result'];
+
+let _switchTimer = null;
+let _prevSection = null;
+let _enterTimer  = null;   // 新页面进入动画结束后的清理 timer
+
+function switchPage(page) {
+  if (page === currentPage) return;
+
+  // 重置所有倾斜元素的 inline 样式，防止 SPA 切换后动画被阻塞
+  if (typeof resetAllTilt === 'function') resetAllTilt();
+
+  // 清理旧 timer（上次切换可能还没结束）
+  if (_switchTimer) {
+    clearTimeout(_switchTimer);
+    _switchTimer = null;
+    if (_prevSection) {
+      _prevSection.classList.remove('exit-to-left', 'exit-to-right', 'enter-from-left', 'enter-from-right');
+      _prevSection.classList.remove('active');
+      _prevSection.style.transform = '';
+      _prevSection = null;
+    }
+  }
+  if (_enterTimer) {
+    clearTimeout(_enterTimer);
+    _enterTimer = null;
+  }
+
+  const oldSection = document.getElementById('page-' + currentPage);
+  const newSection = document.getElementById('page-' + page);
+  const curIdx = NAV_ORDER.indexOf(currentPage);
+  const newIdx = NAV_ORDER.indexOf(page);
+  const goingRight = newIdx > curIdx;
+
+  // 1. 旧页面：带方向退出
+  if (oldSection) {
+    oldSection.classList.remove('enter-from-left', 'enter-from-right', 'active');
+    const exitClass = goingRight ? 'exit-to-left' : 'exit-to-right';
+    oldSection.classList.add(exitClass);
+    _prevSection = oldSection;
+  }
+
+  // 2. 新页面：带方向进入
+  if (newSection) {
+    newSection.classList.remove('exit-to-left', 'exit-to-right', 'enter-from-left', 'enter-from-right');
+    newSection.scrollTop = 0;           // 重置内部滚动位置
+    const enterClass = goingRight ? 'enter-from-right' : 'enter-from-left';
+    newSection.classList.add(enterClass);
+    void newSection.offsetWidth; // 强制 reflow，让浏览器先应用 enter-from 的初始帧
+    newSection.classList.add('active');
+
+    // 动画结束后移除进入方向类，恢复 pointer-events
+    _enterTimer = setTimeout(() => {
+      newSection.classList.remove('enter-from-left', 'enter-from-right');
+      _enterTimer = null;
+    }, 440);
+  }
+
+  // 3. 立即更新导航栏
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.dataset.page === page);
+  });
+
+  const activeLink = document.querySelector('.nav-link.active');
+  if (activeLink) updatePill(activeLink);
+
+  if (page === 'result') refreshResultPage();
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // 重新触发首页 hero 动画（全部元素）
+  if (page === 'home') {
+    const home = document.getElementById('page-home');
+    if (home) {
+      // 重置所有带 CSS 动画的 hero 子元素
+      const animatedEls = home.querySelectorAll('.hero-kanji, .word, .hero-subtitle, .hero-actions');
+      animatedEls.forEach(el => {
+        el.style.animation = 'none';
+        void el.offsetHeight;  // 强制 reflow
+        el.style.animation = '';
+      });
+    }
+  }
+
+  // 4. 旧页面动画结束后隐藏
+  if (_prevSection) {
+    _switchTimer = setTimeout(() => {
+      if (_prevSection) {
+        _prevSection.classList.remove('exit-to-left', 'exit-to-right', 'enter-from-left', 'enter-from-right');
+        _prevSection.style.transform = '';
+      }
+      _switchTimer = null;
+      _prevSection = null;
+    }, 420);
+  }
+
+  currentPage = page;
+}
+
+// 页面标题信息已移除，保留空函数避免调用报错
+function updateNavPageInfo() {}
+
+let _navHoverTimer = null;   // 全局共享，快速跨按钮时立即覆盖
+
+function initNavLinks() {
+  const links = document.querySelectorAll('.nav-link');
+
+  links.forEach(link => {
+    // mouseenter：立即切换，0ms delay 跟手
+    link.addEventListener('mouseenter', () => {
+      const page = link.dataset.page;
+      if (!page || page === currentPage) return;
+
+      // 立即取消上一次的 timer，无论之前悬停在哪个按钮上
+      if (_navHoverTimer) clearTimeout(_navHoverTimer);
+
+      // 0ms 直接切换，极致跟手
+      _navHoverTimer = setTimeout(() => {
+        _navHoverTimer = null;
+        switchPage(page);
+      }, 0);
+    });
+
+    // mouseleave：只取消还未执行的切换，不阻止已触发的
+    link.addEventListener('mouseleave', () => {
+      // 只有 timer 还存在（还没执行）时才取消
+      // 如果已经执行了，clearTimeout 也无害
+      if (_navHoverTimer) {
+        clearTimeout(_navHoverTimer);
+        _navHoverTimer = null;
+      }
+    });
+
+    // 点击作为触屏备用
+    link.addEventListener('click', (e) => {
+      const page = link.dataset.page;
+      if (!page || page === currentPage) return;
+      e.preventDefault();
+      if (_navHoverTimer) { clearTimeout(_navHoverTimer); _navHoverTimer = null; }
+      switchPage(page);
+    });
+  });
+
+  // 鼠标完全离开导航区域时取消待执行切换
+  const navLinks = document.getElementById('navLinks');
+  if (navLinks) {
+    navLinks.addEventListener('mouseleave', () => {
+      if (_navHoverTimer) { clearTimeout(_navHoverTimer); _navHoverTimer = null; }
+    });
+  }
+}
+
+// ======================= Nav Pill (Liquid Glass Sliding) =======================
+
+let navPill = null;
+
+function initNavPill() {
+  const navLinks = document.getElementById('navLinks');
+  if (!navLinks) return;
+
+  navPill = document.createElement('div');
+  navPill.className = 'nav-pill';
+  navLinks.appendChild(navPill);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const active = navLinks.querySelector('.nav-link.active');
+      if (active) updatePill(active);
+    });
+  });
+
+  const links = navLinks.querySelectorAll('.nav-link');
+  links.forEach(link => {
+    link.addEventListener('mouseenter', () => updatePill(link));
+    link.addEventListener('mouseleave', () => {
+      const active = navLinks.querySelector('.nav-link.active');
+      if (active) updatePill(active);
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    const active = navLinks.querySelector('.nav-link.active');
+    if (active) updatePill(active);
+  });
+}
+
+function updatePill(target) {
+  if (!navPill || !target) return;
+  const container = document.getElementById('navLinks');
+  if (!container) return;
+
+  const cr = container.getBoundingClientRect();
+  const tr = target.getBoundingClientRect();
+  const left = tr.left - cr.left;
+  const width = tr.width;
+
+  navPill.style.left = left + 'px';
+  navPill.style.width = width + 'px';
+}
+
+// ======================= Firework Particle System =======================
+
+function initFireworks() {
+  let canvas = document.getElementById('fireworkCanvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.id = 'fireworkCanvas';
+    document.body.appendChild(canvas);
+  }
+
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let animId = null;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const FIREWORK_DURATION = 500;
+
+  class Particle {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 6;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed - 1;
+      this.born = performance.now();
+      this.life = 1;
+      const colors = [
+        [196, 104, 58], [255, 180, 120], [255, 210, 160],
+        [255, 255, 220], [220, 140, 100], [196, 130, 80], [240, 160, 120],
+      ];
+      const c = colors[Math.floor(Math.random() * colors.length)];
+      this.r = c[0]; this.g = c[1]; this.b = c[2];
+      this.size = 1.5 + Math.random() * 3.5;
+      this.gravity = 0.06;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.vy += this.gravity;
+      this.vx *= 0.99;
+      const elapsed = performance.now() - this.born;
+      this.life = Math.max(0, 1 - elapsed / FIREWORK_DURATION);
+    }
+    draw(ctx) {
+      const alpha = this.life;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = `rgb(${this.r},${this.g},${this.b})`;
+      ctx.shadowColor = `rgba(${this.r},${this.g},${this.b},0.6)`;
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size * alpha, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    dead() { return this.life <= 0; }
+  }
+
+  function spawn(x, y, count) {
+    if (animId) cancelAnimationFrame(animId);
+    particles = [];
+    animId = null;
+
+    count = count || 30;
+    for (let i = 0; i < count; i++) particles.push(new Particle(x, y));
+    animId = requestAnimationFrame(loop);
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.update();
+      if (p.dead()) {
+        particles.splice(i, 1);
+        continue;
+      }
+      p.draw(ctx);
+    }
+    if (particles.length > 0) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      animId = null;
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    spawn(e.clientX, e.clientY, 25 + Math.floor(Math.random() * 15));
+  });
+}
+
+// ======================= Backend Ping =======================
+
+async function pingBackend() {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  if (!dot || !text) return;
+  dot.className = 'status-dot';
+  text.textContent = '连接中...';
+  try {
+    const res = await fetch(`${API_BASE}/ping`, { method: 'GET', signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json();
+      dot.className = 'status-dot online';
+      text.textContent = `后端已连接 · ${data.version || 'v1.0'}`;
+    } else throw new Error('not ok');
+  } catch {
+    dot.className = 'status-dot offline';
+    text.textContent = '后端未连接 — 请启动 C++ 服务';
+  }
+}
+
+// ======================= File Input =======================
+
+function setupFileInput() {
+  const input = document.getElementById('fileInput');
+  if (!input) return;
+  input.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+}
+
+function setupDragDrop() {
+  const zone = document.getElementById('uploadZone');
+  if (!zone) return;
+  zone.addEventListener('dragenter', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+}
+
+function handleFile(file) {
+  const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/bmp', 'image/tiff', 'image/x-tiff'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  const allowedExts = ['png', 'jpg', 'jpeg', 'raw', 'bmp', 'tiff', 'tif', 'webp'];
+
+  if (!allowed.includes(file.type) && !allowedExts.includes(ext)) {
+    showToast('不支持该文件格式', 'error');
+    return;
+  }
+
+  currentFile = file;
+  resultBlob = null;
+  resultFileName = null;
+
+  const meta = document.getElementById('imgMeta');
+  if (meta) {
+    document.getElementById('metaName').textContent = file.name;
+    document.getElementById('metaFormat').textContent = ext.toUpperCase();
+    document.getElementById('metaBytes').textContent = formatBytes(file.size);
+    meta.classList.remove('hidden');
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('inputCanvas');
+      if (!canvas) return;
+      drawToCanvas(canvas, img);
+      canvas.classList.remove('hidden');
+
+      const uz = document.getElementById('uploadZone');
+      if (uz) uz.style.display = 'none';
+
+      const actions = document.getElementById('imgActions');
+      if (actions) actions.classList.remove('hidden');
+
+      const metaSize = document.getElementById('metaSize');
+      if (metaSize) metaSize.textContent = `${img.width} × ${img.height}`;
+
+      resetOutputUI();
+
+      const pb = document.getElementById('processBtn');
+      if (pb) pb.disabled = false;
+
+      showToast(`已导入: ${file.name}`);
+    };
+    img.src = e.target.result;
+  };
+
+  if (ext === 'raw') {
+    showRawPlaceholder();
+    const pb = document.getElementById('processBtn');
+    if (pb) pb.disabled = false;
+    const metaSize = document.getElementById('metaSize');
+    if (metaSize) metaSize.textContent = 'RAW 格式';
+  } else {
+    reader.readAsDataURL(file);
+  }
+}
+
+function resetOutputUI() {
+  const timingBlock = document.getElementById('timingBlock');
+  if (timingBlock) timingBlock.classList.add('hidden');
+}
+
+function showRawPlaceholder() {
+  const canvas = document.getElementById('inputCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = 300;
+  canvas.height = 200;
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, 300, 200);
+  ctx.fillStyle = '#666';
+  ctx.font = 'bold 20px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('RAW FILE', 150, 95);
+  ctx.font = '13px monospace';
+  ctx.fillStyle = '#C4683A';
+  ctx.fillText(currentFile.name, 150, 120);
+  canvas.classList.remove('hidden');
+  const uz = document.getElementById('uploadZone');
+  if (uz) uz.style.display = 'none';
+  const actions = document.getElementById('imgActions');
+  if (actions) actions.classList.remove('hidden');
+}
+
+function changeImage() {
+  const fi = document.getElementById('fileInput');
+  if (fi) fi.click();
+}
+
+function removeImage() {
+  currentFile = null;
+  resultBlob = null;
+  resultFileName = null;
+
+  const el = (id) => document.getElementById(id);
+  if (el('inputCanvas')) el('inputCanvas').classList.add('hidden');
+  if (el('uploadZone')) el('uploadZone').style.display = '';
+  if (el('imgActions')) el('imgActions').classList.add('hidden');
+  if (el('imgMeta')) el('imgMeta').classList.add('hidden');
+  if (el('processBtn')) el('processBtn').disabled = true;
+  resetOutputUI();
+  if (el('fileInput')) el('fileInput').value = '';
+
+  showToast('已移除照片');
+}
+
+function drawToCanvas(canvas, img) {
+  const MAX_W = 400, MAX_H = 300;
+  let w = img.width, h = img.height;
+  if (w > MAX_W || h > MAX_H) {
+    const ratio = Math.min(MAX_W / w, MAX_H / h);
+    w = Math.round(w * ratio);
+    h = Math.round(h * ratio);
+  }
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+}
+
+// ======================= Mode Selection =======================
+
+function setupModePill() {
+  const pill = document.getElementById('modePill');
+  const tabs = document.querySelectorAll('.mode-tab');
+  if (!pill || !tabs.length) return;
+
+  function movePill(activeTab) {
+    const parent = pill.parentElement;
+    const parentRect = parent.getBoundingClientRect();
+    const rect = activeTab.getBoundingClientRect();
+    pill.style.left = (rect.left - parentRect.left) + 'px';
+    pill.style.width = rect.width + 'px';
+  }
+
+  const activeTab = document.querySelector('.mode-tab.active') || tabs[0];
+  requestAnimationFrame(() => movePill(activeTab));
+
+  tabs.forEach(tab => {
+    tab.addEventListener('mouseenter', () => {
+      selectMode(tab);
+    });
+  });
+  const container = pill.parentElement;
+  if (container) {
+    container.addEventListener('mouseleave', () => {
+      const current = document.querySelector('.mode-tab.active') || tabs[0];
+      selectMode(current);
+    });
+  }
+}
+
+function selectMode(btn) {
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = btn.dataset.mode;
+
+  const pill = document.getElementById('modePill');
+  const parent = pill?.parentElement;
+  if (pill && parent) {
+    const parentRect = parent.getBoundingClientRect();
+    const rect = btn.getBoundingClientRect();
+    pill.style.left = (rect.left - parentRect.left) + 'px';
+    pill.style.width = rect.width + 'px';
+  }
+}
+
+// ======================= Format Tabs =======================
+
+function setupFormatTabs() {
+  document.querySelectorAll('.fmt-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.fmt-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const qualityRow = document.getElementById('qualityRow');
+      if (qualityRow) qualityRow.style.display = btn.dataset.fmt === 'png' ? 'none' : '';
+    });
+  });
+}
+
+// ======================= Process Image =======================
+
+async function processImage() {
+  if (!currentFile) return;
+
+  const processBtn = document.getElementById('processBtn');
+  if (!processBtn) return;
+
+  const btnText = processBtn.querySelector('.btn-text');
+  const btnSpinner = document.getElementById('btnSpinner');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+
+  processBtn.disabled = true;
+  if (btnText) btnText.textContent = '处理中...';
+  if (btnSpinner) btnSpinner.classList.remove('hidden');
+  if (progressWrap) progressWrap.classList.remove('hidden');
+  const timingBlock = document.getElementById('timingBlock');
+  if (timingBlock) timingBlock.classList.add('hidden');
+
+  const stopProgress = animateProgress(progressBar, progressText);
+
+  const sigmaS = parseInt(document.getElementById('sigmaS').value);
+  const sigmaR = parseInt(document.getElementById('sigmaR').value);
+
+  const formData = new FormData();
+  formData.append('image', currentFile, currentFile.name);
+  formData.append('sigma_s', sigmaS);
+  formData.append('sigma_r', sigmaR);
+  formData.append('mode', currentMode);
+
+  startTime = performance.now();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+  try {
+    const response = await fetch(`${API_BASE}/denoise`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`服务器错误: ${response.status} — ${errText}`);
+    }
+    clearTimeout(timeoutId);
+
+    const elapsed = Math.round(performance.now() - startTime);
+
+    const blob = await response.blob();
+    resultBlob = blob;
+
+    const baseName = currentFile.name.replace(/\.[^.]+$/, '');
+    const ext = currentFile.name.split('.').pop().toLowerCase();
+    resultFileName = `${baseName}_denoised.${ext}`;
+
+    window._lastDenoiseParams = { sigmaS, sigmaR, mode: currentMode, elapsed };
+    window._lastInputCanvas = document.getElementById('inputCanvas');
+
+    stopProgress();
+    if (progressBar) progressBar.style.width = '100%';
+    if (progressText) progressText.textContent = '处理完成！';
+    setTimeout(() => { if (progressWrap) progressWrap.classList.add('hidden'); }, 1200);
+
+    showToast(`降噪完成，耗时 ${elapsed} ms`, 'success');
+
+    setTimeout(() => switchPage('result'), 600);
+
+  } catch (err) {
+    stopProgress();
+    clearTimeout(timeoutId);
+    if (progressWrap) progressWrap.classList.add('hidden');
+    if (err.name === 'AbortError') {
+      showToast('处理超时（90s），请检查后端是否正常运行', 'error');
+    } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+      showToast('无法连接后端 — 请确认 C++ 服务已启动 (localhost:8080)', 'error');
+    } else {
+      showToast(err.message, 'error');
+    }
+    console.error(err);
+  } finally {
+    processBtn.disabled = false;
+    if (btnText) btnText.textContent = '开始处理';
+    if (btnSpinner) btnSpinner.classList.add('hidden');
+  }
+}
+
+function animateProgress(bar, text) {
+  if (!bar || !text) return () => {};
+  let pct = 0;
+  const msgs = ['上传图片...', '分析噪声分布...', '构建哈希缓存...', '双边滤波处理中...', '等待后端响应...'];
+  let msgIdx = 0;
+  const iv = setInterval(() => {
+    if (pct < 90) {
+      const step = pct < 30 ? 8 : pct < 60 ? 5 : 2;
+      pct = Math.min(pct + step + Math.random() * 3, 90);
+      bar.style.width = pct + '%';
+      const expectedMsg = Math.floor((pct / 90) * 4);
+      if (expectedMsg > msgIdx && expectedMsg < 4) {
+        msgIdx = expectedMsg;
+        text.textContent = msgs[msgIdx];
+      }
+    } else {
+      text.textContent = msgs[4];
+      bar.style.width = '90%';
+    }
+  }, 350);
+  return () => { clearInterval(iv); };
+}
+
+// ======================= Result Page Refresh =======================
+
+function refreshResultPage() {
+  if (!resultBlob) {
+    const emptyState = document.getElementById('emptyState');
+    const resultContent = document.getElementById('resultContent');
+    if (emptyState) emptyState.classList.remove('hidden');
+    if (resultContent) resultContent.classList.add('hidden');
+    return;
+  }
+
+  const emptyState = document.getElementById('emptyState');
+  const resultContent = document.getElementById('resultContent');
+  if (emptyState) emptyState.classList.add('hidden');
+  if (resultContent) {
+    resultContent.classList.remove('hidden');
+    // Force reflow so mouse-tracking works immediately
+    void resultContent.offsetHeight;
+  }
+
+  const p = window._lastDenoiseParams || {};
+  const timing = document.getElementById('resultTiming');
+  if (timing) timing.textContent = (p.elapsed || '--') + ' ms';
+  const rs = document.getElementById('resultSigmaS');
+  if (rs) rs.textContent = p.sigmaS || '--';
+  const rr = document.getElementById('resultSigmaR');
+  if (rr) rr.textContent = p.sigmaR || '--';
+  const rm = document.getElementById('resultMode');
+  if (rm) rm.textContent = p.mode === 'bilateral' ? '彩色双边' : '灰度 Y 通道';
+
+  const url = URL.createObjectURL(resultBlob);
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.getElementById('resultCanvas');
+    if (!canvas) return;
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    setupCompareImages();
+  };
+  img.src = url;
+}
+
+// ======================= Save Image =======================
+
+async function saveImage() {
+  if (!resultBlob) { showToast('没有可保存的图片', 'error'); return; }
+
+  const activeTab = document.querySelector('.fmt-tab.active');
+  if (!activeTab) { showToast('请选择保存格式', 'error'); return; }
+
+  const fmt = activeTab.dataset.fmt;
+  const qualitySlider = document.getElementById('qualitySlider');
+  const quality = qualitySlider ? parseInt(qualitySlider.value) / 100 : 1;
+
+  let finalBlob = resultBlob;
+  let fileName = resultFileName;
+
+  if (fmt !== 'png' || quality !== 1) {
+    finalBlob = await convertBlob(resultBlob, fmt, quality);
+    const base = (resultFileName || 'denoised').replace(/\.[^.]+$/, '');
+    fileName = `${base}.${fmt}`;
+  }
+
+  const url = URL.createObjectURL(finalBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName || 'denoised.png';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  showToast(`已保存: ${fileName}`, 'success');
+}
+
+async function convertBlob(blob, fmt, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((b) => resolve(b), `image/${fmt}`, quality);
+    };
+    img.src = url;
+  });
+}
+
+// ======================= Custom Sliders (hover-drag + liquid glass thumb) =======================
+
+let _customSliders = [];
+
+function initCustomSliders() {
+  const natives = document.querySelectorAll('.slider');
+  natives.forEach(native => {
+    if (native.dataset.custom === 'true') return;
+    native.dataset.custom = 'true';
+
+    const min = parseFloat(native.min) || 0;
+    const max = parseFloat(native.max) || 100;
+    let val = parseFloat(native.value) || 0;
+
+    // Build custom slider DOM
+    const wrap = document.createElement('div');
+    wrap.className = 'custom-slider';
+    wrap.dataset.targetId = native.id;
+
+    const track = document.createElement('div');
+    track.className = 'custom-slider-track';
+
+    const fill = document.createElement('div');
+    fill.className = 'custom-slider-fill';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'custom-slider-thumb';
+
+    track.appendChild(fill);
+    track.appendChild(thumb);
+    wrap.appendChild(track);
+
+    // Insert after native, then hide native
+    native.style.display = 'none';
+    native.insertAdjacentElement('afterend', wrap);
+
+    const data = {
+      native, wrap, track, thumb, fill,
+      min, max, val,
+      isHoverDrag: false,
+      isClickDrag: false,
+    };
+    _customSliders.push(data);
+
+    function pctFromX(clientX) {
+      const r = track.getBoundingClientRect();
+      return Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    }
+
+    function updateThumb() {
+      const pct = (data.val - data.min) / (data.max - data.min) * 100;
+      thumb.style.left = pct + '%';
+      fill.style.width = pct + '%';
+    }
+
+    function applyValue(newVal) {
+      newVal = Math.max(data.min, Math.min(data.max, Math.round(newVal)));
+      if (newVal === data.val) return;
+      data.val = newVal;
+      native.value = data.val;
+      native.dispatchEvent(new Event('input', { bubbles: true }));
+      updateThumb();
+    }
+
+    updateThumb();
+
+    // Hover-drag: enter slider area → enable, leave → disable
+    wrap.addEventListener('mouseenter', () => {
+      data.isHoverDrag = true;
+    });
+    wrap.addEventListener('mouseleave', () => {
+      data.isHoverDrag = false;
+      data.isClickDrag = false;
+      thumb.classList.remove('dragging');
+    });
+
+    // Click-drag (fallback)
+    thumb.addEventListener('mousedown', (e) => {
+      data.isClickDrag = true;
+      thumb.classList.add('dragging');
+      e.preventDefault();
+    });
+
+    // Click track to jump
+    track.addEventListener('click', (e) => {
+      applyValue(data.min + pctFromX(e.clientX) * (data.max - data.min));
+    });
+
+    data._applyFromX = (clientX) => {
+      applyValue(data.min + pctFromX(clientX) * (data.max - data.min));
+    };
+  });
+
+  // Single global mousemove for ALL custom sliders
+  document.addEventListener('mousemove', (e) => {
+    _customSliders.forEach(d => {
+      if (d.isHoverDrag || d.isClickDrag) {
+        d._applyFromX(e.clientX);
+      }
+    });
+  });
+
+  document.addEventListener('mouseup', () => {
+    _customSliders.forEach(d => {
+      d.isClickDrag = false;
+      d.thumb.classList.remove('dragging');
+    });
+  });
+}
+
+// ======================= Compare Slider =======================
+
+let compareActive = false;
+
+function setupCompareImages() {
+  const compareHint = document.getElementById('compareHint');
+  if (compareHint) compareHint.onclick = openCompare;
+}
+
+function openCompare() {
+  if (!resultBlob) return;
+
+  const overlay = document.getElementById('compareOverlay');
+  const origCanvas = document.getElementById('compareOriginal');
+  const resCanvas = document.getElementById('compareResult');
+
+  const srcCanvas = document.getElementById('inputCanvas');
+  if (!srcCanvas || !overlay || !origCanvas || !resCanvas) return;
+
+  const resultCanvas = document.getElementById('resultCanvas');
+  if (!resultCanvas) return;
+
+  const cmpW = resultCanvas.width;
+  const cmpH = resultCanvas.height;
+
+  origCanvas.width = cmpW;
+  origCanvas.height = cmpH;
+  resCanvas.width = cmpW;
+  resCanvas.height = cmpH;
+
+  const ictx = origCanvas.getContext('2d');
+  ictx.drawImage(srcCanvas, 0, 0, cmpW, cmpH);
+
+  const rctx = resCanvas.getContext('2d');
+  rctx.drawImage(resultCanvas, 0, 0);
+
+  overlay.classList.remove('hidden');
+  compareActive = true;
+}
+
+function closeCompare() {
+  const overlay = document.getElementById('compareOverlay');
+  if (overlay) overlay.classList.add('hidden');
+  compareActive = false;
+}
+
+function setupCompareSlider() {
+  const divider = document.getElementById('compareDivider');
+  const wrap = document.getElementById('compareResultWrap');
+  const container = document.getElementById('compareContainer');
+  if (!divider || !wrap || !container) return;
+
+  let dragging = false;
+
+  const onMove = (x) => {
+    if (!dragging || !compareActive) return;
+    const rect = container.getBoundingClientRect();
+    let pct = ((x - rect.left) / rect.width) * 100;
+    pct = Math.max(5, Math.min(95, pct));
+    divider.style.left = pct + '%';
+    wrap.style.width = pct + '%';
+  };
+
+  divider.addEventListener('mousedown', () => { dragging = true; });
+  document.addEventListener('mousemove', (e) => onMove(e.clientX));
+  document.addEventListener('mouseup', () => { dragging = false; });
+
+  divider.addEventListener('touchstart', (e) => { dragging = true; e.preventDefault(); });
+  document.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX));
+  document.addEventListener('touchend', () => { dragging = false; });
+
+  const overlay = document.getElementById('compareOverlay');
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeCompare();
+    });
+  }
+}
+
+// ======================= Utils =======================
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+let toastTimer = null;
+function showToast(msg, type) {
+  type = type || '';
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.className = 'toast show' + (type ? ' ' + type : '');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.className = 'toast hidden'; }, 2800);
+}
+
+// ======================= Mouse Tilt (2D position follow) =======================
+// Uses document-level event delegation so it works for all elements,
+// including children of panels (canvas, buttons, etc.)
+
+const TILT_SELECTOR =
+  '.feature-card, .bounce-card, ' +
+  '.btn:not(.nav-ping-btn), ' +
+  '.img-action-btn, .fmt-tab, .compare-close, ' +
+  '.btn-process:not(:disabled), ' +
+  '.result-info-bar, .result-canvas-wrap, .save-block';
+
+let _tiltCurrent = null;   // element currently under tilt
+let _tiltLeaving = false;
+
+function _findTiltTarget(e) {
+  // Try e.target first (fast path)
+  let el = e.target.closest(TILT_SELECTOR);
+  if (!el) {
+    // Fallback: use elementsFromPoint to find the topmost element at cursor
+    const hits = document.elementsFromPoint(e.clientX, e.clientY);
+    for (let i = 0; i < hits.length; i++) {
+      el = hits[i].closest(TILT_SELECTOR);
+      if (el) break;
+    }
+  }
+  if (!el) return null;
+  if (el.closest('.nav-links') || el.classList.contains('mode-tab')) return null;
+  // Only tilt elements whose page-section is active (visible)
+  const section = el.closest('.page-section');
+  if (section && !section.classList.contains('active')) return null;
+  return el;
+}
+
+function _applyTilt(el, e) {
+  const rect = el.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return;
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+  const tx = ((x - cx) / cx) * 8;
+  const ty = ((y - cy) / cy) * 8;
+  el.style.transition = 'none';
+  el.style.transform = 'translateX(' + tx.toFixed(1) + 'px) translateY(' + ty.toFixed(1) + 'px)';
+}
+
+function _resetTilt(el) {
+  el.style.transition = 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)';
+  el.style.transform = 'translateX(0) translateY(0)';
+
+  let done = false;
+  const restore = () => {
+    if (done) return;
+    done = true;
+    el.style.transition = '';
+    el.style.transform = '';
+    el.style.animation = '';
+  };
+  const onEnd = (ev) => {
+    if (ev.propertyName !== 'transform' && ev.propertyName !== 'webkitTransform') return;
+    el.removeEventListener('transitionend', onEnd);
+    restore();
+  };
+  el.addEventListener('transitionend', onEnd);
+  setTimeout(restore, 500);
+}
+
+function initMouseTilt() {
+  // Kill any previous listeners (safe to call multiple times)
+  // We use document-level delegation, so just attach once.
+  if (initMouseTilt._attached) return;
+  initMouseTilt._attached = true;
+
+  document.addEventListener('mousemove', (e) => {
+    const el = _findTiltTarget(e);
+
+    if (el) {
+      if (el !== _tiltCurrent) {
+        // Mouse entered a new tilt element
+        if (_tiltCurrent) _resetTilt(_tiltCurrent);
+        _tiltCurrent = el;
+        _tiltLeaving = false;
+        el.style.animation = 'none';
+      }
+      _applyTilt(el, e);
+    } else {
+      // Mouse is not over any tilt element
+      if (_tiltCurrent) {
+        _resetTilt(_tiltCurrent);
+        _tiltCurrent = null;
+      }
+    }
+  });
+
+  document.addEventListener('mouseleave', () => {
+    if (_tiltCurrent) {
+      _resetTilt(_tiltCurrent);
+      _tiltCurrent = null;
+    }
+  });
+}
+
+
+function resetAllTilt() {
+  if (_tiltCurrent) {
+    _tiltCurrent.style.transition = '';
+    _tiltCurrent.style.transform = '';
+    _tiltCurrent.style.animation = '';
+    _tiltCurrent = null;
+  }
+}

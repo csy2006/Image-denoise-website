@@ -1,0 +1,829 @@
+/* ==================== 创意滤镜页面 ==================== */
+/* 布局完全镜像 ticket.css —— 左侧面板 + 右侧预览 */
+
+/* 页面容器：紧贴导航栏，禁止滚动 */
+#page-filter {
+  overflow: hidden !important;
+}
+
+/* ==================== 页面布局 ==================== */
+/* .page-section 是 absolute; top: var(--navbar-h)，页面容器已从导航栏底部开始
+   .filter-page 无需 padding-top（.page-section 已留好空间）
+   min-height: 100% 填满 .page-section 的高度（= 100vh - navbar-h） */
+.filter-page {
+  display: flex;
+  min-height: 100%;
+  gap: 0;
+}
+
+/* ==================== 左侧面板 ==================== */
+.filter-panel {
+  width: 420px;
+  min-width: 420px;
+  padding: 2rem 2rem;
+  background: var(--warm-white);
+  border-right: 1px solid var(--orange-border);
+  overflow-y: auto;
+  max-height: calc(100vh - var(--navbar-h, 54px));
+  position: sticky;
+  top: var(--navbar-h, 54px);
+}
+
+.filter-panel-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.filter-panel-desc {
+  font-size: 0.875rem;
+  color: var(--ink-faded);
+  font-weight: 300;
+  margin-bottom: 1.5rem;
+}
+
+/* ==================== 上传区域 ==================== */
+.filter-upload-zone {
+  border: 2px dashed var(--orange-border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--orange-ghost);
+  margin-bottom: 1.5rem;
+}
+
+.filter-upload-zone:hover {
+  border-color: var(--orange);
+  background: rgba(196,104,58,0.1);
+}
+
+.filter-upload-zone.drag-over {
+  border-color: var(--orange);
+  background: rgba(196,104,58,0.12);
+}
+
+.filter-upload-content {
+  /* 默认显示 */
+}
+
+.filter-upload-icon {
+  color: var(--orange);
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.filter-upload-text {
+  font-size: 0.95rem;
+  color: var(--ink-light);
+}
+
+.filter-upload-hint {
+  font-size: 0.75rem;
+  color: var(--ink-faded);
+  margin-top: 0.5rem;
+}
+
+.filter-upload-preview {
+  /* 上传后显示预览（替代 upload-content） */
+}
+
+.filter-upload-preview img {
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ==================== 弹窗内预览 ==================== */
+.filter-sheet-preview {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.filter-sheet-preview-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink-faded);
+  margin-bottom: 0.5rem;
+}
+
+.filter-sheet-preview-inner {
+  width: 100%;
+  background: transparent;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.filter-sheet-preview-inner img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-sm);
+}
+
+/* ==================== 编辑器（滤镜选择区） ==================== */
+.filter-editor {
+  animation: fadeSlideIn 0.4s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.filter-editor-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.3rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--orange-border);
+}
+
+/* ==================== 滤镜类别切换 Tab（液态玻璃药丸） ==================== */
+.filter-category-tabs {
+  position: relative;
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.9rem;
+  border-radius: 100px;
+  overflow: visible;
+  background: rgba(196, 104, 58, 0.06);
+  padding: 2px;
+  isolation: isolate;
+}
+
+/* 液态玻璃滑动药丸 — 透明橙色玻璃，在浅色背景下清晰可见 */
+.filter-category-pill {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  bottom: 2px;
+  width: 33.33%;
+  min-height: 30px;
+  border-radius: 100px;
+  background: linear-gradient(135deg, rgba(232, 81, 10, 0.65), rgba(232, 81, 10, 0.42));
+  border: 1px solid rgba(232, 81, 10, 0.55);
+  box-shadow: 0 4px 20px rgba(232, 81, 10, 0.32),
+              0 1px 4px rgba(232, 81, 10, 0.18),
+              inset 0 1px 0 rgba(255, 255, 255, 0.45),
+              inset 0 -1px 0 rgba(232, 81, 10, 0.12);
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+              width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: left, width;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* 玻璃高光 — 完全对齐 nav-pill::before */
+.filter-category-pill::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 55%;
+  border-radius: 100px 100px 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* 底部反射白线 — 完全对齐 nav-pill::after */
+.filter-category-pill::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 18%;
+  width: 64%;
+  height: 1px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 50%;
+  filter: blur(0.5px);
+  pointer-events: none;
+}
+
+/* Tab 按钮 */
+.filter-category-tab {
+  flex: 1;
+  padding: 0.65rem 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-light);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.28s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
+  outline: none;
+  position: relative;
+  z-index: 2;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  transform-origin: center center;
+}
+
+/* 点击：纵向放大更多 */
+.filter-category-tab:active {
+  transform: scaleX(1.05) scaleY(1.18);
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.filter-category-tab.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 深色模式 Tab — 完全对齐导航栏暗色模式 */
+[data-theme="dark"] .filter-category-tabs {
+  background: rgba(53, 48, 42, 0.85) !important;
+}
+
+[data-theme="dark"] .filter-category-pill {
+  background: linear-gradient(135deg, rgba(232, 81, 10, 0.28), rgba(232, 81, 10, 0.14)) !important;
+  border-color: rgba(232, 81, 10, 0.45) !important;
+  box-shadow: 0 2px 14px rgba(232, 81, 10, 0.20),
+              0 1px 3px rgba(232, 81, 10, 0.10),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06),
+              inset 0 -1px 0 rgba(232, 81, 10, 0.10) !important;
+}
+
+[data-theme="dark"] .filter-category-pill::before {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%) !important;
+}
+
+[data-theme="dark"] .filter-category-pill::after {
+  background: rgba(255,255,255,0.05) !important;
+}
+
+/* ==================== 滤镜类别标签（保留用于可能的旧引用） ==================== */
+.filter-category-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink-faded);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0.15rem;
+}
+
+/* ==================== 滤镜预设：水平药丸排布 ==================== */
+.filter-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.filter-preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--orange-border);
+  border-radius: 50px;
+  background: var(--warm-white);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  min-height: 32px;
+}
+
+.filter-preset-btn:hover {
+  border-color: var(--orange);
+  background: var(--orange-ghost);
+}
+
+.filter-preset-btn:active {
+  transform: scale(0.96);
+}
+
+.filter-preset-btn.active {
+  background: var(--orange);
+  color: #fff;
+  border-color: var(--orange);
+  box-shadow: 0 2px 8px rgba(196,104,58,0.22);
+}
+
+.filter-preset-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 9 个预设颜色指示圆点 */
+.filter-preset-dot.fl { background: #95A5A6; }
+.filter-preset-dot.nt { background: #5C6D7E; }
+.filter-preset-dot.vv { background: #E8510A; }
+.filter-preset-dot.sh { background: #3D2B1F; }
+.filter-preset-dot.in { background: #BF8B5E; }
+.filter-preset-dot.pt { background: #D4A056; }
+.filter-preset-dot.as { background: #D4846C; }
+.filter-preset-dot.pn { background: #7A9E94; }
+.filter-preset-dot.cc { background: #4A6076; }
+.filter-preset-dot.to { background: #1A8B9C; }
+.filter-preset-dot.or { background: #E8510A; }
+
+.filter-preset-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1;
+  color: inherit;
+}
+
+.filter-preset-btn.active .filter-preset-dot {
+  background: rgba(255,255,255,0.85);
+}
+
+/* ==================== 编辑器操作按钮 ==================== */
+.filter-editor-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.filter-editor-actions .btn-primary {
+  flex: 1;
+}
+
+.filter-editor-actions .btn-secondary {
+  border-radius: 50px !important;
+}
+
+/* ==================== 右侧预览区 ==================== */
+.filter-preview-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--cream);
+  min-height: calc(100vh - var(--navbar-h, 54px));
+}
+
+.filter-preview-placeholder {
+  text-align: center;
+  color: var(--ink-faded);
+}
+
+.filter-preview-placeholder .placeholder-content {
+  /* 空状态 */
+}
+
+.filter-preview-placeholder .placeholder-content p {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--stone);
+}
+
+/* 滤镜结果展示容器 */
+.filter-result-container {
+  width: 100%;
+  max-width: 820px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.filter-result-container img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+  object-fit: contain;
+  display: block;
+}
+
+/* ==================== 滤镜详情标签（当前使用的滤镜名） ==================== */
+.filter-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  background: var(--orange);
+  color: #fff;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-top: 0.75rem;
+}
+
+/* ==================== 上传区：页面内永远隐藏，仅在弹窗中显示 ==================== */
+/* 所有设备：页面内（.filter-page 上下文中）彻底隐藏上传区 */
+.filter-page .filter-upload-zone,
+.filter-page #filterUploadZone {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* 弹窗内（body 直接子元素）恢复上传区显示并居中 */
+body > .filter-panel .filter-upload-zone {
+  display: flex !important;
+  visibility: visible !important;
+  height: auto !important;
+  padding: 2.5rem 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  border: 2px dashed var(--orange-border) !important;
+  border-radius: var(--radius-lg) !important;
+  overflow: visible !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+body > .filter-panel .filter-upload-content,
+body > .filter-panel .filter-upload-preview {
+  width: 100% !important;
+  max-width: 320px !important;
+  margin: 0 auto !important;
+}
+
+/* 弹窗内上传区隐藏（上传完照片后），用 !important 覆盖 display:flex */
+body > .filter-panel .filter-upload-zone.upload-hidden {
+  display: none !important;
+}
+
+/* ==================== 移动端底部弹窗面板 ==================== */
+/* 完全镜像 ticket-panel 的底部弹窗写法（style.css 中已验证可用） */
+/* 面板移到 body 下时，通过 .sheet-open 控制显示 */
+body > .filter-panel {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: auto !important;
+  width: 100% !important;
+  min-width: unset !important;
+  max-width: unset !important;
+  max-height: 70vh;
+  height: auto;
+  z-index: 1001 !important;
+  border-right: none !important;
+  border-top: 1px solid var(--orange-border) !important;
+  border-bottom: none !important;
+  border-radius: 20px 20px 0 0 !important;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.15) !important;
+  background: var(--cream) !important;
+  flex-direction: column !important;
+  display: flex !important;
+  gap: 1.2rem;
+  padding: 0.6rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom, 0px)) !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: auto;
+  -webkit-overflow-scrolling: touch;
+  /* 默认隐藏：在屏幕下方，不可交互 */
+  transform: translateY(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              max-height 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              border-radius 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              visibility 0s linear 0.35s;
+}
+
+body > .filter-panel.sheet-open {
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto !important;
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              max-height 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              border-radius 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              visibility 0s linear 0s;
+}
+
+/* 全屏展开：铺满整屏，覆盖导航栏 */
+body > .filter-panel.sheet-expanded {
+  max-height: 100vh !important;
+  height: 100vh !important;
+  top: 0 !important;
+  border-radius: 0 !important;
+  overflow-y: auto !important;
+}
+
+/* ==================== 移动端遮罩：铺满整屏 ==================== */
+body > .filter-mobile-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,.35) !important;
+  z-index: 1000 !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+body > .filter-mobile-backdrop.show {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* ==================== 移动端浮动切换按钮 ==================== */
+/* 和 .ticket-mobile-toggle 保持同一套标准，桌面端隐藏，移动端显示 */
+.filter-mobile-toggle {
+  display: none;
+}
+
+/* ==================== sheet-top-bar（拖拽手柄） ==================== */
+/* 默认隐藏：非弹窗模式（桌面左右栏 + 移动端普通流）不显示 */
+/* 只隐藏滤镜面板内的手柄，不影响票根面板 */
+.filter-panel .sheet-top-bar {
+  display: none;
+}
+.filter-panel .sheet-drag-handle,
+.filter-panel .sheet-expand-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* 浮动切换按钮（对齐 .ticket-mobile-toggle 标准） */
+  .filter-mobile-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    /* 调整底部距离，避免遮挡 footer（footer 高度约 30px） */
+    bottom: 50px;
+    bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1002;
+    background: var(--orange);
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(196,104,58,.35);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    border: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .filter-mobile-toggle:active {
+    transform: translateX(-50%) scale(0.95);
+    box-shadow: 0 2px 12px rgba(196,104,58,.25);
+  }
+  .filter-mobile-toggle.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(20px);
+  }
+
+  body > .filter-panel .sheet-top-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  body > .filter-panel .sheet-drag-handle {
+    display: block;
+  }
+  body > .filter-panel .sheet-expand-btn {
+    display: flex;
+    position: absolute;
+    right: 1rem;
+    top: 0.85rem;
+  }
+}
+
+/* 仅作用于滤镜面板，不影响票根面板 */
+.filter-panel .sheet-drag-handle {
+  width: 40px;
+  height: 5px;
+  background: var(--sand);
+  border-radius: 100px;
+  margin: 0 auto;
+  touch-action: none;
+}
+
+/* 仅作用于滤镜面板，不影响票根面板 */
+.filter-panel .sheet-expand-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--cream);
+  color: var(--ink-faded);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  z-index: 1;
+}
+
+.filter-panel .sheet-expand-btn:hover {
+  background: var(--sand);
+}
+
+/* 深色模式：仅滤镜面板按钮用橙色强调色 */
+[data-theme="dark"] .filter-panel .sheet-expand-btn {
+  background: rgba(232, 81, 10, 0.22) !important;
+  border: 2px solid rgba(232, 81, 10, 0.50) !important;
+  box-shadow: 0 0 8px rgba(232, 81, 10, 0.15) !important;
+}
+[data-theme="dark"] .filter-panel .sheet-expand-btn:hover {
+  background: rgba(232, 81, 10, 0.38) !important;
+}
+[data-theme="dark"] .filter-panel .sheet-expand-btn svg {
+  color: rgba(232, 81, 10, 0.85) !important;
+}
+
+/* 箭头方向由 style.css 全局规则控制，此处不再声明，避免覆盖：
+   半屏（.sheet-open:not(.sheet-expanded)）→ arrow-up 朝上
+   全屏（.sheet-expanded）→ arrow-down 朝下 */
+
+/* ==================== 移动端适配 ==================== */
+@media (max-width: 900px) {
+  .filter-page {
+    flex-direction: column;
+  }
+
+  /* 移动端：面板在页面内（非弹窗模式）时隐藏，页面只显示预览+浮动按钮 */
+  .filter-page > .filter-panel:not(.sheet-open):not(.sheet-expanded) {
+    display: none !important;
+  }
+
+  .filter-panel {
+    width: 100%;
+    min-width: unset;
+    position: static;
+    max-height: none;
+    top: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--orange-border);
+    padding: 1.5rem;
+  }
+
+  /* ── 分类Tab：3个Tab均分，字体缩小防截断 ── */
+  .filter-category-tabs {
+    gap: 0;
+    margin-bottom: 0.7rem;
+    padding: 2px;
+  }
+
+  .filter-category-tab {
+    flex: 1;
+    font-size: 0.78rem;
+    padding: 0.5rem 0.2em;
+    min-height: 34px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .filter-category-pill {
+    min-height: 30px;
+  }
+
+  /* ── 预设按钮：缩小适配 ── */
+  .filter-presets {
+    gap: 0.4rem;
+  }
+
+  .filter-preset-btn {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  .filter-preview-area {
+    /* flex:1 自动填满 .filter-page 剩余空间（.filter-panel 隐藏后 = 全部空间），内容垂直居中 */
+    flex: 1;
+    min-height: 0;
+    padding: 2rem 1.5rem;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .filter-result-container {
+    max-width: 100%;
+  }
+
+  .filter-result-container img {
+    max-height: 50vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-panel {
+    padding: 1rem;
+  }
+
+  .filter-panel-title {
+    font-size: 1.5rem;
+  }
+
+  .filter-preview-area {
+    padding: 1rem;
+  }
+
+  .filter-upload-zone {
+    padding: 1.5rem 1rem;
+  }
+
+  .filter-editor-actions {
+    flex-direction: column;
+  }
+
+  .filter-presets {
+    gap: 0.35rem;
+  }
+
+  .filter-category-tab {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.15em;
+    min-height: 30px;
+  }
+
+  .filter-preset-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.74rem;
+  }
+
+  .filter-preset-dot {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* ==================== 横屏适配 ==================== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .filter-page {
+    flex-direction: row;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .filter-panel {
+    width: 320px;
+    min-width: 320px;
+    max-height: 100vh;
+    overflow-y: auto;
+    position: relative;
+    border-right: 1px solid var(--orange-border);
+    border-bottom: none;
+  }
+
+  .filter-preview-area {
+    flex: 1;
+    min-height: auto;
+    padding: 0.5rem;
+    overflow-y: auto;
+  }
+
+  .filter-result-container {
+    max-width: 100%;
+  }
+
+  .filter-result-container img {
+    max-height: 85vh;
+  }
+}
+
+@media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  .filter-panel {
+    width: 280px;
+    min-width: 280px;
+    padding: 1rem;
+  }
+
+  .filter-preview-area {
+    padding: 0.5rem;
+  }
+}

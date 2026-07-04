@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>上传处理 — IMAGE DENOISE</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="exif.js"></script>
+</head>
+<body class="page-inner">
+
+<!-- 背景动画 -->
+<div class="bg-animation">
+  <div class="bg-circle bg-circle-1"></div>
+  <div class="bg-circle bg-circle-2"></div>
+  <div class="bg-circle bg-circle-3"></div>
+</div>
+
+<!-- 导航栏 -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:0.6rem;color:inherit;">
+      <span class="nav-icon">&#9670;</span>
+      <span class="nav-title">IMAGE <em>DENOISE</em></span>
+    </a>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">首页</a>
+    <a class="nav-link active" href="upload.html">上传处理</a>
+    <a class="nav-link" href="result.html">处理结果</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-status" id="statusBar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">等待后端连接...</span>
+    </div>
+    <button class="nav-ping-btn" onclick="pingBackend()">检测服务</button>
+  </div>
+</nav>
+
+<!-- 页面标题 -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <h1 class="page-title">上传 &amp; 处理</h1>
+    <p class="page-desc">导入图片，调整降噪参数，点击开始处理</p>
+  </div>
+</div>
+
+<!-- 主内容区 -->
+<main class="page-main page-main-wide">
+
+  <!-- 左右双列布局 -->
+  <div class="upload-params-grid">
+
+    <!-- 左列：上传区域 -->
+    <section class="content-section upload-col">
+      <div class="panel-header">
+        <span class="panel-num">01</span>
+        <h2>导入图片</h2>
+      </div>
+
+      <div class="upload-zone glass-card" id="uploadZone">
+        <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.raw,.bmp,.tiff,.tif,.webp" hidden />
+        <div class="upload-inner" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <path d="M24 10V34M24 10L16 18M24 10L32 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 36H38" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="upload-hint">拖拽或点击导入图片</p>
+          <p class="upload-format">支持 PNG · JPG · JPEG · RAW · BMP · TIFF · WebP</p>
+        </div>
+      </div>
+
+      <!-- 图片预览 + 操作 -->
+      <div class="preview-block" id="previewBlock">
+        <canvas id="inputCanvas" class="img-canvas hidden"></canvas>
+
+        <div class="img-actions hidden" id="imgActions">
+          <button class="img-action-btn change" onclick="changeImage()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M13 2H3L2 5V14H14V5L13 2Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+              <path d="M8 12V6M8 6L5 9M8 6L11 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            更换照片
+          </button>
+          <button class="img-action-btn remove" onclick="removeImage()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M5 2L2 5V14H14V5L11 2H5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+              <path d="M6 7L10 11M10 7L6 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            移除照片
+          </button>
+        </div>
+
+        <div class="img-meta hidden" id="imgMeta">
+          <div class="meta-row"><span class="meta-key">文件名</span><span class="meta-val" id="metaName">--</span></div>
+          <div class="meta-row"><span class="meta-key">格式</span><span class="meta-val" id="metaFormat">--</span></div>
+          <div class="meta-row"><span class="meta-key">尺寸</span><span class="meta-val" id="metaSize">--</span></div>
+          <div class="meta-row"><span class="meta-key">大小</span><span class="meta-val" id="metaBytes">--</span></div>
+        </div>
+
+        <!-- 相机参数（EXIF） -->
+        <div class="img-meta meta-exif-block hidden" id="metaExifBlock">
+          <div class="meta-exif-title">相机信息</div>
+          <div class="meta-exif-row"><span class="meta-key">制造商</span><span class="meta-val" id="metaMake">--</span></div>
+          <div class="meta-exif-row"><span class="meta-key">型号</span><span class="meta-val" id="metaModel">--</span></div>
+          <div class="meta-exif-row"><span class="meta-key">光圈</span><span class="meta-val" id="metaAperture">--</span></div>
+          <div class="meta-exif-row"><span class="meta-key">快门</span><span class="meta-val" id="metaShutter">--</span></div>
+          <div class="meta-exif-row"><span class="meta-key">ISO</span><span class="meta-val" id="metaISO">--</span></div>
+          <div class="meta-exif-row"><span class="meta-key">焦距</span><span class="meta-val" id="metaFocal">--</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右列：降噪参数 -->
+    <section class="content-section params-col">
+      <div class="panel-header">
+        <span class="panel-num">02</span>
+        <h2>降噪参数</h2>
+      </div>
+
+      <div class="params-grid">
+        <div class="param-card glass-card">
+          <h3 class="param-card-title">双边滤波算法</h3>
+          <div class="algo-formula">
+            W(i,j) = G<sub>s</sub>(|i&minus;j|) &middot; G<sub>r</sub>(|I(i)&minus;I(j)|)<br/>
+            G<sub>s</sub> = exp(&minus;||xy||&sup2; / 2&sigma;<sub>s</sub>&sup2;)<br/>
+            G<sub>r</sub> = exp(&minus;||I||&sup2; / 2&sigma;<sub>r</sub>&sup2;)
+          </div>
+        </div>
+
+        <div class="param-card glass-card">
+          <h3 class="param-card-title">数据结构</h3>
+          <div class="ds-badges">
+            <span class="ds-badge">哈希表</span>
+            <span class="ds-badge">链表</span>
+            <span class="ds-badge">大顶堆</span>
+            <span class="ds-badge">队列</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="param-controls glass-card">
+        <div class="param-group">
+          <label class="param-label">
+            空间半径 &sigma;<sub>s</sub> = <em id="sigmaS_val">5</em>
+          </label>
+          <input type="range" class="slider" id="sigmaS" min="1" max="15" value="5"
+            oninput="document.getElementById('sigmaS_val').textContent=this.value" />
+          <div class="param-scale"><span>1 &mdash; 轻微</span><span>15 &mdash; 强力</span></div>
+        </div>
+
+        <div class="param-group">
+          <label class="param-label">
+            颜色阈值 &sigma;<sub>r</sub> = <em id="sigmaR_val">25</em>
+          </label>
+          <input type="range" class="slider" id="sigmaR" min="1" max="100" value="25"
+            oninput="document.getElementById('sigmaR_val').textContent=this.value" />
+          <div class="param-scale"><span>1 &mdash; 保边</span><span>100 &mdash; 平滑</span></div>
+        </div>
+
+        <div class="param-group">
+          <label class="param-label">降噪模式</label>
+          <div class="mode-tabs">
+            <button class="mode-tab active" data-mode="bilateral" onclick="selectMode(this)">彩色双边</button>
+            <button class="mode-tab" data-mode="grayscale_bilateral" onclick="selectMode(this)">灰度 Y 通道</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-process" id="processBtn" onclick="processImage()" disabled>
+          <span class="btn-text">开始处理</span>
+          <div class="btn-spinner hidden" id="btnSpinner"></div>
+        </button>
+
+        <div class="progress-wrap hidden" id="progressWrap">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+          <span class="progress-text" id="progressText">处理中...</span>
+        </div>
+
+        <div class="timing hidden" id="timingBlock">
+          <span class="timing-label">处理耗时</span>
+          <span class="timing-val" id="timingVal">-- ms</span>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- end .upload-params-grid -->
+
+</main>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer">
+  <div class="toast hidden" id="toast"></div>
+</div>
+
+<!-- Compare Overlay (hidden on this page, kept for compatibility) -->
+<div class="compare-overlay hidden" id="compareOverlay">
+  <div class="compare-container" id="compareContainer">
+    <canvas id="compareOriginal" class="compare-canvas"></canvas>
+    <div class="compare-result-wrap" id="compareResultWrap">
+      <canvas id="compareResult" class="compare-canvas"></canvas>
+    </div>
+    <div class="compare-divider" id="compareDivider"></div>
+    <span class="compare-badge badge-left">原图</span>
+    <span class="compare-badge badge-right">降噪后</span>
+    <button class="compare-close" onclick="closeCompare()">&times;</button>
+  </div>
+</div>
+
+<!-- hidden placeholders required by main.js -->
+<canvas id="outputCanvas" class="hidden"></canvas>
+<div id="outputPlaceholder" class="hidden"></div>
+<div id="saveBlock" class="hidden"></div>
+<div id="compareHint" class="hidden"></div>
+
+<script src="main.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    pingBackend();
+
+    // Restore state from sessionStorage if returning
+    const saved = sessionStorage.getItem('denoiseInputFile');
+    if (saved) {
+      // Nothing to restore canvas, but keep UI consistent
+    }
+  });
+
+  // Override processImage to redirect to result page after success
+  const _origProcess = processImage;
+  processImage = async function() {
+    // Store params so result.html can display them
+    const params = {
+      sigmaS: document.getElementById('sigmaS').value,
+      sigmaR: document.getElementById('sigmaR').value,
+      mode: currentMode,
+    };
+    sessionStorage.setItem('denoiseParams', JSON.stringify(params));
+
+    // Store file info (with EXIF) for result page photo info section
+    if (typeof originalFileInfo !== 'undefined' && originalFileInfo) {
+      sessionStorage.setItem('denoiseFileInfo', JSON.stringify(originalFileInfo));
+    }
+
+    await _origProcess();
+    // If result is ready, redirect
+    if (resultBlob) {
+      // Pass blob via sessionStorage as data URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          sessionStorage.setItem('denoiseResult', e.target.result);
+          sessionStorage.setItem('denoiseResultName', resultFileName || 'denoised.png');
+          sessionStorage.setItem('denoiseTiming', document.getElementById('timingVal').textContent);
+          // Capture input canvas as data URL for comparison
+          const ic = document.getElementById('inputCanvas');
+          sessionStorage.setItem('denoiseInput', ic.toDataURL('image/png'));
+          window.location.href = 'result.html';
+        } catch(ex) {
+          showToast('结果已处理，请查看下方结果', 'success');
+        }
+      };
+      reader.readAsDataURL(resultBlob);
+    }
+  };
+</script>
+</body>
+</html>
