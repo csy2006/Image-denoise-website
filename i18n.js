@@ -299,6 +299,11 @@ var i18n = (function () {
 
     // 同步个人中心动态文本（深色模式、震动、语言）
     syncProfileDescs();
+
+    // 语言切换后 nav-links 文本宽度变化，重新校准液态玻璃 pill
+    if (typeof repositionNavPill === 'function') {
+      requestAnimationFrame(repositionNavPill);
+    }
   }
 
   /* 同步个人中心动态文本 */
