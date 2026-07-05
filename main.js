@@ -2988,6 +2988,51 @@ function resetAllTilt() {
     return decimal;
   }
 
+  /* —— 拼音音节拆分（贪心最长匹配）—— */
+  /* 将 "sichuan" → "si chuan"，用于英文目的地格式化 */
+  var _tkPinyinSyllables = ('a ai an ang ao ba bai ban bang bao bei ben beng bi bian biao bie bin bing bo bu ' +
+    'ca cai can cang cao ce cen ceng cha chai chan chang chao che chen cheng chi chong chou chu chua chuai ' +
+    'chuan chuang chui chun chuo ci cong cou cu cuan cui cun cuo da dai dan dang dao de dei den deng di dian ' +
+    'diao die ding diu dong dou du duan dui dun duo e ei en eng er fa fan fang fei fen feng fo fou fu ga gai ' +
+    'gan gang gao ge gei gen geng gong gou gu gua guai guan guang gui gun guo ha hai han hang hao he hei hen ' +
+    'heng hong hou hu hua huai huan huang hui hun huo ji jia jian jiang jiao jie jin jing jiong jiu ju juan ' +
+    'jue jun ka kai kan kang kao ke kei ken keng kong kou ku kua kuai kuan kuang kui kun kuo la lai lan lang ' +
+    'lao le lei leng li lia lian liang liao lie lin ling liu long lou lu luan lue lun luo lv lve ma mai man ' +
+    'mang mao me mei men meng mi mian miao mie min ming miu mo mou mu na nai nan nang nao ne nei nen neng ni ' +
+    'nian niang niao nie nin ning niu nong nou nu nuan nue nun nuo nv nve o ou pa pai pan pang pao pei pen ' +
+    'peng pi pian piao pie pin ping po pou pu qi qia qian qiang qiao qie qin qing qiong qiu qu quan que qun ' +
+    'ran rang rao re ren reng ri rong rou ru rua ruan rui run ruo sa sai san sang sao se sen seng sha shai ' +
+    'shan shang shao she shei shen sheng shi shou shu shua shuai shuan shuang shui shun shuo si song sou su ' +
+    'suan sui sun suo ta tai tan tang tao te teng ti tian tiao tie ting tong tou tu tuan tui tun tuo wa wai ' +
+    'wan wang wei wen weng wo wu xi xia xian xiang xiao xie xin xing xiong xiu xu xuan xue xun ya yan yang ' +
+    'yao ye yi yin ying yo yong you yu yuan yue yun za zai zan zang zao ze zei zen zeng zha zhai zhan zhang ' +
+    'zhao zhe zhei zhen zheng zhi zhong zhou zhu zhua zhuai zhuan zhuang zhui zhun zhuo zi zong zou zu zuan ' +
+    'zui zun zuo').split(' ');
+
+  function _tkPinyinSplit(str) {
+    if (!str) return '';
+    var lower = str.toLowerCase().trim();
+    var parts = lower.split(/\s+/); // 先按空格分词
+    var out = [];
+    for (var p = 0; p < parts.length; p++) {
+      var word = parts[p];
+      var i = 0;
+      while (i < word.length) {
+        var matched = false;
+        for (var len = Math.min(6, word.length - i); len >= 1; len--) {
+          if (_tkPinyinSyllables.indexOf(word.substring(i, i + len)) !== -1) {
+            out.push(word.substring(i, i + len));
+            i += len;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) { out.push(word.substring(i)); break; }
+      }
+    }
+    return out.join(' ').toUpperCase();
+  }
+
   /* —— 逆地理编码：GPS 坐标 → 城市/国家 —— */
   /* 使用 BigDataCloud 免费 API（CORS 友好、中国可访问、无需密钥） */
   function _tkReverseGeocode(lat, lon, cb) {
@@ -3018,9 +3063,11 @@ function resetAllTilt() {
 
     fetchBC('zh', function(data) {
       if (data) {
-        result.cnCountry = data.countryName || null;
+        var country = data.countryName || null;
+        if (country === '中华人民共和国') country = '中国';
+        result.cnCountry = country;
         var cnCity = data.city || data.locality || data.principalSubdivision || null;
-        if (cnCity) cnCity = cnCity.replace(/市$/, ''); // 去掉"市"后缀
+        if (cnCity) cnCity = cnCity.replace(/(市|省|自治区|特别行政区)$/, ''); // 去掉行政后缀
         result.cnCity = cnCity;
       }
       done++;
@@ -3045,7 +3092,12 @@ function resetAllTilt() {
           console.log('[ticket] 逆地理编码结果:', info);
           if (!info.enCity && !info.cnCity) return; // 逆地理编码失败，保持默认
           if (info.enCity && inputDestination) {
-            inputDestination.value = info.enCity.toUpperCase().replace(/\s+/g, ' ');
+            // 中国地点：拼音按音节拆分（Sichuan → SI CHUAN）
+            if (info.cnCountry === '中国') {
+              inputDestination.value = _tkPinyinSplit(info.enCity);
+            } else {
+              inputDestination.value = info.enCity.toUpperCase().replace(/\s+/g, ' ');
+            }
           }
           if (info.cnCountry && info.cnCity && inputLocationCN) {
             inputLocationCN.value = info.cnCountry + ' · ' + info.cnCity;
@@ -3712,3 +3764,4 @@ function resetAllTilt() {
   });
 
 })();
+
