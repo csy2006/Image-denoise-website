@@ -397,9 +397,18 @@ function setTheme(theme) {
   // 动画完成后切换主题并移除遮罩
   clearTimeout(window._themeSweepTimer);
   window._themeSweepTimer = setTimeout(function() {
+    // 禁用所有 CSS 过渡，避免 data-theme 切换时元素背景色渐变产生闪烁
+    document.body.classList.add('theme-switching');
     _applyThemeUI(theme);
     sweep.className = 'theme-sweep-overlay';   // 停止动画
     sweep.style.clipPath = 'inset(0 0 100% 0)'; // 隐藏回顶部
+
+    // 下一帧恢复过渡，确保新主题色已瞬时应用
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        document.body.classList.remove('theme-switching');
+      });
+    });
 
     // 主题切换后，如果当前是首页，重新播放开场动画
     if (currentPage === 'home') {
@@ -753,7 +762,7 @@ window.addEventListener('load', function() {
 
 // ======================= Page Switching (SPA) =======================
 
-const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter'];
+const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter', 'profile'];
 
 let _switchTimer = null;
 let _prevSection = null;
@@ -2127,6 +2136,10 @@ function parseExifRobust(buffer) {
           iso:            raw.ISOSpeedRatings !== undefined ? Number(raw.ISOSpeedRatings) || toNumber(raw.ISOSpeedRatings) : null,
           focalLength:    toNumber(raw.FocalLength),
           colorSpace:     raw.ColorSpace !== undefined ? Number(raw.ColorSpace) : null,
+          gpsLatitude:    raw.GPSLatitude || null,
+          gpsLatitudeRef: raw.GPSLatitudeRef || null,
+          gpsLongitude:   raw.GPSLongitude || null,
+          gpsLongitudeRef: raw.GPSLongitudeRef || null,
         };
       }
     }
@@ -2147,6 +2160,10 @@ function parseExifRobust(buffer) {
       iso:          exifJsResult.iso          ?? custom.iso          ?? null,
       focalLength:  exifJsResult.focalLength  ?? custom.focalLength  ?? null,
       colorSpace:   exifJsResult.colorSpace   ?? custom.colorSpace   ?? null,
+      gpsLatitude:    exifJsResult.gpsLatitude    || null,
+      gpsLatitudeRef: exifJsResult.gpsLatitudeRef || null,
+      gpsLongitude:   exifJsResult.gpsLongitude   || null,
+      gpsLongitudeRef: exifJsResult.gpsLongitudeRef || null,
     };
   }
 
@@ -2936,6 +2953,67 @@ function resetAllTilt() {
   /* 微信环境检测（IIFE 作用域，供下载函数等复用） */
   var _tkIsWeChat = /MicroMessenger/i.test(navigator.userAgent);
 
+  /* —— EXIF GPS 转十进制 —— */
+  function _tkGpsToDecimal(gpsArr, ref) {
+    if (!gpsArr || !gpsArr.length) return null;
+    var d = toNumber(gpsArr[0]) || 0;
+    var m = toNumber(gpsArr[1]) || 0;
+    var s = toNumber(gpsArr[2]) || 0;
+    var decimal = d + m / 60 + s / 3600;
+    if (ref === 'S' || ref === 'W') decimal = -decimal;
+    return decimal;
+  }
+
+  /* —— 逆地理编码：GPS 坐标 → 城市/国家 —— */
+  function _tkReverseGeocode(lat, lon, cb) {
+    var done = 0, result = { enCity: null, cnCountry: null, cnCity: null };
+    var urlEn = 'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=en&zoom=10';
+    var urlZh = 'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=zh&zoom=10';
+
+    fetch(urlEn).then(function(r) { return r.json(); }).then(function(data) {
+      if (data && data.address) {
+        result.enCity = data.address.city || data.address.town || data.address.county || data.address.state || null;
+      }
+    }).catch(function() {}).then(function() {
+      done++;
+      if (done === 2) cb(result);
+    });
+
+    fetch(urlZh).then(function(r) { return r.json(); }).then(function(data) {
+      if (data && data.address) {
+        result.cnCountry = data.address.country || null;
+        result.cnCity = data.address.city || data.address.town || data.address.county || data.address.state || null;
+      }
+    }).catch(function() {}).then(function() {
+      done++;
+      if (done === 2) cb(result);
+    });
+  }
+
+  /* —— 从文件提取 GPS 并自动填充目的地 —— */
+  function _tkFillLocationFromExif(file) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var exif = parseExifRobust(ev.target.result);
+        var lat = _tkGpsToDecimal(exif.gpsLatitude, exif.gpsLatitudeRef);
+        var lon = _tkGpsToDecimal(exif.gpsLongitude, exif.gpsLongitudeRef);
+        if (lat === null || lon === null) return; // 无 GPS 信息，保持默认
+        _tkReverseGeocode(lat, lon, function(info) {
+          if (!info.enCity && !info.cnCity) return; // 逆地理编码失败，保持默认
+          if (info.enCity && inputDestination) {
+            inputDestination.value = info.enCity.toUpperCase().replace(/\s+/g, ' ');
+          }
+          if (info.cnCountry && info.cnCity && inputLocationCN) {
+            inputLocationCN.value = info.cnCountry + ' · ' + info.cnCity;
+          }
+          _tkUpdate(); // 刷新预览
+        });
+      } catch (e) { /* EXIF 解析失败，静默 */ }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
   function initTicket() {
     if (!uploadZone || !fileInput) return;
     uploadZone.addEventListener('click', function() { fileInput.click(); });
@@ -2969,6 +3047,8 @@ function resetAllTilt() {
   function _tkProcess(file) {
     if (!file.type.match(/image\/(jpeg|png|webp)/)) { alert('请选择 JPG / PNG / WebP 格式'); return; }
     vibrate(10);
+    // 异步提取 EXIF GPS 并自动填充目的地（不阻塞主流程）
+    _tkFillLocationFromExif(file);
     var reader = new FileReader();
     reader.onload = function(ev) {
       _ticketImage = ev.target.result;
