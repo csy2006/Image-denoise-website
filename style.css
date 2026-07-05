@@ -5,6 +5,13 @@
   box-sizing: border-box;
 }
 
+/* 主题切换时禁用所有过渡，防止元素背景色渐变产生闪烁 */
+body.theme-switching *,
+body.theme-switching *::before,
+body.theme-switching *::after {
+  transition: none !important;
+}
+
 :root {
   --cream: #FDF8F4;
   --warm-white: #FEFCF9;
