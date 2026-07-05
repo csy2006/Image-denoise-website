@@ -2140,6 +2140,7 @@ function parseExifRobust(buffer) {
           gpsLatitudeRef: raw.GPSLatitudeRef || null,
           gpsLongitude:   raw.GPSLongitude || null,
           gpsLongitudeRef: raw.GPSLongitudeRef || null,
+          dateTimeOriginal: raw.DateTimeOriginal || raw.DateTime || null,
         };
       }
     }
@@ -2164,6 +2165,7 @@ function parseExifRobust(buffer) {
       gpsLatitudeRef: exifJsResult.gpsLatitudeRef || custom.gpsLatitudeRef || null,
       gpsLongitude:   exifJsResult.gpsLongitude   || custom.gpsLongitude   || null,
       gpsLongitudeRef: exifJsResult.gpsLongitudeRef || custom.gpsLongitudeRef || null,
+      dateTimeOriginal: exifJsResult.dateTimeOriginal || custom.dateTimeOriginal || custom.dateTime || null,
     };
   }
 
@@ -2255,10 +2257,12 @@ function readIFD(view, tiffBase, offset, isLE) {
     switch (tag) {
       case 0x010F: result.make = readString(view, rawVal, numVals); break;
       case 0x0110: result.model = readString(view, rawVal, numVals); break;
+      case 0x0132: result.dateTime = readString(view, rawVal, numVals); break; // DateTime (IFD0)
       case 0x829A: result.exposureTime = readRational(view, rawVal, isLE); break;
       case 0x829D: result.fNumber = readRational(view, rawVal, isLE); break;
       case 0x8827: result.iso = readShort(view, rawVal, isLE); break;
       case 0x920A: result.focalLength = readRational(view, rawVal, isLE); break;
+      case 0x9003: result.dateTimeOriginal = readString(view, rawVal, numVals); break; // DateTimeOriginal (SubIFD)
       case 0xA001: result.colorSpace = readShort(view, rawVal, isLE); break;
       case 0x8769: result._subIfdOffset = view.getUint32(valOffset, isLE); break; // Exif SubIFD pointer
       case 0x8825: result._gpsIfdOffset = view.getUint32(valOffset, isLE); break; // GPS IFD pointer
@@ -3075,24 +3079,45 @@ function resetAllTilt() {
     });
   }
 
-  /* —— 从文件提取 GPS 并自动填充目的地 —— */
+  /* —— 从 EXIF 提取日期 → "YYYY · M" 格式 —— */
+  function _tkFormatExifDate(str) {
+    if (!str) return null;
+    // EXIF 格式: "2024:07:15 14:30:00" 或 "2024-07-15 14:30:00"
+    var m = str.match(/^(\d{4})[:\-\/](\d{1,2})/);
+    if (!m) return null;
+    var year = m[1];
+    var month = parseInt(m[2], 10); // 去前导零
+    if (month < 1 || month > 12) return null;
+    return year + ' · ' + month;
+  }
+
+  /* —— 从文件提取 EXIF 信息并自动填充目的地 + 日期 —— */
   function _tkFillLocationFromExif(file) {
     var reader = new FileReader();
     reader.onload = function(ev) {
       try {
         var exif = parseExifRobust(ev.target.result);
+        console.log('[ticket] EXIF:', exif);
+
+        // —— 日期 ——
+        var dateStr = _tkFormatExifDate(exif.dateTimeOriginal);
+        if (dateStr && inputDate) {
+          inputDate.value = dateStr;
+          console.log('[ticket] 日期已填充:', dateStr);
+        }
+
+        // —— GPS 位置 ——
         var lat = _tkGpsToDecimal(exif.gpsLatitude, exif.gpsLatitudeRef);
         var lon = _tkGpsToDecimal(exif.gpsLongitude, exif.gpsLongitudeRef);
-        console.log('[ticket] EXIF GPS:', { raw: exif, lat: lat, lon: lon });
         if (lat === null || lon === null) {
-          console.log('[ticket] 无 GPS 信息，保持默认');
+          console.log('[ticket] 无 GPS 信息，仅填充日期');
+          _tkUpdate();
           return;
         }
         _tkReverseGeocode(lat, lon, function(info) {
           console.log('[ticket] 逆地理编码结果:', info);
-          if (!info.enCity && !info.cnCity) return; // 逆地理编码失败，保持默认
+          if (!info.enCity && !info.cnCity) return;
           if (info.enCity && inputDestination) {
-            // 中国地点：拼音按音节拆分（Sichuan → SI CHUAN）
             if (info.cnCountry === '中国') {
               inputDestination.value = _tkPinyinSplit(info.enCity);
             } else {
@@ -3102,7 +3127,7 @@ function resetAllTilt() {
           if (info.cnCountry && info.cnCity && inputLocationCN) {
             inputLocationCN.value = info.cnCountry + ' · ' + info.cnCity;
           }
-          _tkUpdate(); // 刷新预览
+          _tkUpdate();
         });
       } catch (e) {
         console.warn('[ticket] EXIF 解析异常:', e);
