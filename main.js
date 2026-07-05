@@ -2160,10 +2160,10 @@ function parseExifRobust(buffer) {
       iso:          exifJsResult.iso          ?? custom.iso          ?? null,
       focalLength:  exifJsResult.focalLength  ?? custom.focalLength  ?? null,
       colorSpace:   exifJsResult.colorSpace   ?? custom.colorSpace   ?? null,
-      gpsLatitude:    exifJsResult.gpsLatitude    || null,
-      gpsLatitudeRef: exifJsResult.gpsLatitudeRef || null,
-      gpsLongitude:   exifJsResult.gpsLongitude   || null,
-      gpsLongitudeRef: exifJsResult.gpsLongitudeRef || null,
+      gpsLatitude:    exifJsResult.gpsLatitude    || custom.gpsLatitude    || null,
+      gpsLatitudeRef: exifJsResult.gpsLatitudeRef || custom.gpsLatitudeRef || null,
+      gpsLongitude:   exifJsResult.gpsLongitude   || custom.gpsLongitude   || null,
+      gpsLongitudeRef: exifJsResult.gpsLongitudeRef || custom.gpsLongitudeRef || null,
     };
   }
 
@@ -2203,13 +2203,21 @@ function parseExif(buffer) {
 
       const ifd0 = readIFD(view, tiffOffset, offset, isLE);
 
+      var result = Object.assign({}, ifd0);
+
       // Follow Exif SubIFD pointer (tag 0x8769) — most camera params live here
       if (ifd0._subIfdOffset) {
         const sub = readIFD(view, tiffOffset, tiffOffset + ifd0._subIfdOffset, isLE);
-        return { ...ifd0, ...sub };
+        result = Object.assign(result, sub);
       }
 
-      return ifd0;
+      // Follow GPS IFD pointer (tag 0x8825) — GPS data lives here
+      if (ifd0._gpsIfdOffset) {
+        const gps = readIFD(view, tiffOffset, tiffOffset + ifd0._gpsIfdOffset, isLE);
+        result = Object.assign(result, gps);
+      }
+
+      return result;
     }
 
     // Other markers: skip
@@ -2253,6 +2261,12 @@ function readIFD(view, tiffBase, offset, isLE) {
       case 0x920A: result.focalLength = readRational(view, rawVal, isLE); break;
       case 0xA001: result.colorSpace = readShort(view, rawVal, isLE); break;
       case 0x8769: result._subIfdOffset = view.getUint32(valOffset, isLE); break; // Exif SubIFD pointer
+      case 0x8825: result._gpsIfdOffset = view.getUint32(valOffset, isLE); break; // GPS IFD pointer
+      // GPS tags（仅在 GPS IFD 中出现）
+      case 0x0001: result.gpsLatitudeRef = readString(view, rawVal, numVals); break;
+      case 0x0002: result.gpsLatitude = readRationalArray(view, rawVal, isLE, numVals); break;
+      case 0x0003: result.gpsLongitudeRef = readString(view, rawVal, numVals); break;
+      case 0x0004: result.gpsLongitude = readRationalArray(view, rawVal, isLE, numVals); break;
     }
 
     offset += 12;
@@ -2276,6 +2290,16 @@ function readRational(view, offset, isLE) {
   const den = view.getUint32(offset + 4, isLE);
   if (den === 0) return null;
   return num / den;
+}
+
+function readRationalArray(view, offset, isLE, count) {
+  const arr = [];
+  for (let i = 0; i < count; i++) {
+    const num = view.getUint32(offset + 8 * i, isLE);
+    const den = view.getUint32(offset + 4 + 8 * i, isLE);
+    arr.push(den === 0 ? 0 : num / den);
+  }
+  return arr;
 }
 
 function readShort(view, offset, isLE) {
@@ -2965,28 +2989,42 @@ function resetAllTilt() {
   }
 
   /* —— 逆地理编码：GPS 坐标 → 城市/国家 —— */
+  /* 使用 BigDataCloud 免费 API（CORS 友好、中国可访问、无需密钥） */
   function _tkReverseGeocode(lat, lon, cb) {
     var done = 0, result = { enCity: null, cnCountry: null, cnCity: null };
-    var urlEn = 'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=en&zoom=10';
-    var urlZh = 'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=zh&zoom=10';
+    var total = 2;
 
-    fetch(urlEn).then(function(r) { return r.json(); }).then(function(data) {
-      if (data && data.address) {
-        result.enCity = data.address.city || data.address.town || data.address.county || data.address.state || null;
+    function fetchBC(lang, onData) {
+      var url = 'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=' + lang;
+      var settled = false;
+      var timer = setTimeout(function() {
+        if (!settled) { settled = true; onData(null); }
+      }, 8000);
+      fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        if (!settled) { clearTimeout(timer); settled = true; onData(data); }
+      }).catch(function(e) {
+        console.warn('[ticket] BigDataCloud (' + lang + ') failed:', e);
+        if (!settled) { clearTimeout(timer); settled = true; onData(null); }
+      });
+    }
+
+    fetchBC('en', function(data) {
+      if (data) {
+        result.enCity = data.city || data.locality || data.principalSubdivision || null;
       }
-    }).catch(function() {}).then(function() {
       done++;
-      if (done === 2) cb(result);
+      if (done === total) cb(result);
     });
 
-    fetch(urlZh).then(function(r) { return r.json(); }).then(function(data) {
-      if (data && data.address) {
-        result.cnCountry = data.address.country || null;
-        result.cnCity = data.address.city || data.address.town || data.address.county || data.address.state || null;
+    fetchBC('zh', function(data) {
+      if (data) {
+        result.cnCountry = data.countryName || null;
+        var cnCity = data.city || data.locality || data.principalSubdivision || null;
+        if (cnCity) cnCity = cnCity.replace(/市$/, ''); // 去掉"市"后缀
+        result.cnCity = cnCity;
       }
-    }).catch(function() {}).then(function() {
       done++;
-      if (done === 2) cb(result);
+      if (done === total) cb(result);
     });
   }
 
@@ -2998,8 +3036,13 @@ function resetAllTilt() {
         var exif = parseExifRobust(ev.target.result);
         var lat = _tkGpsToDecimal(exif.gpsLatitude, exif.gpsLatitudeRef);
         var lon = _tkGpsToDecimal(exif.gpsLongitude, exif.gpsLongitudeRef);
-        if (lat === null || lon === null) return; // 无 GPS 信息，保持默认
+        console.log('[ticket] EXIF GPS:', { raw: exif, lat: lat, lon: lon });
+        if (lat === null || lon === null) {
+          console.log('[ticket] 无 GPS 信息，保持默认');
+          return;
+        }
         _tkReverseGeocode(lat, lon, function(info) {
+          console.log('[ticket] 逆地理编码结果:', info);
           if (!info.enCity && !info.cnCity) return; // 逆地理编码失败，保持默认
           if (info.enCity && inputDestination) {
             inputDestination.value = info.enCity.toUpperCase().replace(/\s+/g, ' ');
@@ -3009,7 +3052,9 @@ function resetAllTilt() {
           }
           _tkUpdate(); // 刷新预览
         });
-      } catch (e) { /* EXIF 解析失败，静默 */ }
+      } catch (e) {
+        console.warn('[ticket] EXIF 解析异常:', e);
+      }
     };
     reader.readAsArrayBuffer(file);
   }
