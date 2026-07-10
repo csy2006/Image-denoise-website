@@ -33,7 +33,7 @@ var i18n = (function () {
     navResult:           { zh: '降噪结果',       en: 'Result' },
     navTicket:           { zh: '旅行票根',       en: 'Ticket' },
     navFilter:           { zh: '创意滤镜',       en: 'Filters' },
-    navProfile:          { zh: '个人中心',       en: 'Profile' },
+    navProfile:          { zh: '设置中心',       en: 'Profile' },
     statusConnecting:    { zh: '等待后端连接...', en: 'Connecting...' },
     statusConnected:     { zh: '后端已连接',     en: 'Connected' },
     statusError:         { zh: '连接失败',       en: 'Connection failed' },
