@@ -80,7 +80,7 @@ var i18n = (function () {
 
     /* 上传处理 */
     uploadTitle:         { zh: '导入图片',       en: 'Import Image' },
-    uploadHint:          { zh: '拖拽或点击导入图片', en: 'Drag or click to import' },
+    uploadHint:          { zh: '点击导入图片', en: 'Click to import' },
     uploadFormat:        { zh: '支持 PNG · JPG · JPEG · RAW · BMP · TIFF · WebP', en: 'Supports PNG · JPG · JPEG · RAW · BMP · TIFF · WebP' },
     btnChangePhoto:     { zh: '更换照片',       en: 'Change Photo' },
     btnRemovePhoto:     { zh: '移除照片',       en: 'Remove Photo' },
