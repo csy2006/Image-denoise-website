@@ -2733,8 +2733,8 @@ body.page-inner {
   .hero-inner { transform: translateY(0); max-width: 100%; }
   .hero-title { font-size: clamp(2.5rem, 12vw, 4rem); margin-bottom: 0.5rem; }
   .hero-subtitle {
-    font-size: 1.25rem;
-    white-space: normal;
+    font-size: 1.0rem;
+    white-space: nowrap;
     max-width: 90vw;
     line-height: 1.5;
     margin: 0.5rem 0;
@@ -2878,7 +2878,7 @@ body.page-inner {
   .hero-inner { transform: translateY(0); }
   .hero-title { font-size: clamp(2rem, 11vw, 3rem); margin-bottom: 0.4rem; }
   .hero-kanji { font-size: 0.7rem; margin-bottom: 0.5rem; }
-  .hero-subtitle { font-size: 1.15rem; margin: 0.4rem 0; }
+  .hero-subtitle { font-size: 0.85rem; white-space: nowrap; margin: 0.4rem 0; }
 
   /* ---- Navigation ---- */
   .nav-brand-row { font-size: 0.95rem; }
