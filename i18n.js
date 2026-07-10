@@ -209,7 +209,7 @@ var i18n = (function () {
     aboutTech:          { zh: 'C++ · WebAssembly · 液态玻璃 UI',    en: 'C++ · WebAssembly · Glassmorphism UI' },
     aboutLabelVersion:   { zh: '版本',           en: 'Version' },
     aboutAuthor:        { zh: 'Young__Yang',                     en: 'Young__Yang' },
-    aboutLabelVersion:   { zh: '版本',           en: 'Version' },
+    aboutLabelAuthor:   { zh: '作者',           en: 'Author' },
     aboutVersion:       { zh: 'v1.1.3',                         en: 'v1.1.3' },
     dataTitle:           { zh: '数据管理',       en: 'Data' },
     btnClearData:        { zh: '清除本地使用统计', en: 'Clear Usage Statistics' },
