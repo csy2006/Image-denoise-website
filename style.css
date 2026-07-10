@@ -678,7 +678,7 @@ body {
 }
 
 .hero-subtitle {
-  font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+  font-size: clamp(1.3rem, 2.2vw, 1.8rem);
   color: var(--ink-faded);
   max-width: 500px;
   font-weight: 300;
@@ -2733,7 +2733,7 @@ body.page-inner {
   .hero-inner { transform: translateY(0); max-width: 100%; }
   .hero-title { font-size: clamp(2.5rem, 12vw, 4rem); }
   .hero-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     white-space: normal;
     max-width: 90vw;
     line-height: 1.5;
@@ -2877,7 +2877,7 @@ body.page-inner {
   .hero-inner { transform: translateY(0); }
   .hero-title { font-size: clamp(2rem, 11vw, 3rem); }
   .hero-kanji { font-size: 0.7rem; margin-bottom: 0.5rem; }
-  .hero-subtitle { font-size: 0.78rem; }
+  .hero-subtitle { font-size: 0.88rem; }
 
   /* ---- Navigation ---- */
   .nav-brand-row { font-size: 0.95rem; }
