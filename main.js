@@ -762,7 +762,7 @@ window.addEventListener('load', function() {
 
 // ======================= Page Switching (SPA) =======================
 
-const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter', 'profile'];
+const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter', 'palette', 'profile'];
 
 let _switchTimer = null;
 let _prevSection = null;
