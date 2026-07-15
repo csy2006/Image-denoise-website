@@ -1,0 +1,343 @@
+/* ==================== 调色盘提取页面 (PhotoColors 风格) ==================== */
+
+#page-palette {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  /* 默认：使用站点背景（透明，透出 bg-animation） */
+  background: transparent;
+  transition: background-color 0.6s ease;
+}
+
+/* 上传图片后：背景变为主色调 */
+#page-palette.palette-has-image {
+  background: var(--palette-bg, var(--page-bg, #fdf8f4));
+}
+
+.palette-app {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.5rem 2rem;
+  box-sizing: border-box;
+}
+
+/* ==================== 顶部操作栏 ==================== */
+.palette-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.palette-brand {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  transition: color 0.4s ease;
+}
+
+#page-palette.palette-has-image .palette-brand {
+  color: var(--palette-text, var(--ink));
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.palette-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.palette-header-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.palette-header-btn:hover {
+  background: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+}
+
+.palette-header-btn:active {
+  transform: scale(0.94);
+}
+
+.palette-header-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+#page-palette.palette-has-image .palette-header-btn {
+  color: var(--palette-text, var(--ink));
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.28);
+}
+
+#page-palette.palette-has-image .palette-header-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* ==================== 空状态 ==================== */
+.palette-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  min-height: calc(100vh - 200px);
+}
+
+.palette-empty-circles {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 2rem;
+}
+
+.palette-empty-circle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+}
+
+.palette-empty-circle:nth-child(1) {
+  width: 120px;
+  height: 120px;
+  top: 0;
+  opacity: 0.35;
+}
+
+.palette-empty-circle:nth-child(2) {
+  width: 90px;
+  height: 90px;
+  top: 42px;
+  opacity: 0.55;
+}
+
+.palette-empty-circle:nth-child(3) {
+  width: 60px;
+  height: 60px;
+  top: 78px;
+  opacity: 0.85;
+}
+
+.palette-empty-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+  max-width: 90vw;
+}
+
+.palette-empty-desc {
+  font-size: 0.95rem;
+  color: var(--ink-faded);
+  line-height: 1.5;
+  max-width: 320px;
+  margin-bottom: 2.5rem;
+}
+
+.palette-upload-main {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  transition: transform 0.2s ease, background 0.25s ease;
+}
+
+.palette-upload-main:hover {
+  background: rgba(255,255,255,0.32);
+  transform: scale(1.05);
+}
+
+.palette-upload-main:active {
+  transform: scale(0.96);
+}
+
+.palette-upload-main svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* ==================== 结果状态 ==================== */
+.palette-result {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem 0 2rem;
+  min-height: calc(100vh - 160px);
+}
+
+.palette-result.show {
+  display: flex;
+}
+
+.palette-result-meta {
+  margin-bottom: 1.25rem;
+}
+
+.palette-result-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--palette-text, var(--ink));
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  margin-bottom: 0.35rem;
+}
+
+.palette-result-subtitle {
+  font-size: 0.8rem;
+  color: var(--palette-text, var(--ink-faded));
+  opacity: 0.85;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.palette-image-card {
+  width: min(520px, 92vw);
+  border-radius: var(--radius-xl, 24px);
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+  background: var(--warm-white);
+  transition: transform 0.3s ease;
+}
+
+.palette-image-card:hover {
+  transform: translateY(-3px);
+}
+
+.palette-image-card img {
+  width: 100%;
+  display: block;
+}
+
+/* ==================== 导航栏在主色调模式下 ==================== */
+.navbar.palette-colored {
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+.navbar.palette-colored .nav-title,
+.navbar.palette-colored .nav-title a,
+.navbar.palette-colored .nav-link {
+  color: inherit;
+}
+
+.navbar.palette-colored .nav-icon {
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+}
+
+/* ==================== Toast ==================== */
+.palette-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 0.7rem 1.4rem;
+  border-radius: 100px;
+  background: rgba(20,18,16,0.85);
+  color: #fff;
+  font-size: 0.85rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 3000;
+}
+
+.palette-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ==================== 移动端适配 ==================== */
+@media (max-width: 768px) {
+  .palette-app {
+    padding: 0.75rem 1rem 1.5rem;
+  }
+
+  .palette-brand {
+    font-size: 1.25rem;
+  }
+
+  .palette-header-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .palette-header-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .palette-empty-title {
+    font-size: 1.6rem;
+  }
+
+  .palette-empty-desc {
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+  }
+
+  .palette-empty-circles {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 1.5rem;
+  }
+
+  .palette-empty-circle:nth-child(1) { width: 100px; height: 100px; }
+  .palette-empty-circle:nth-child(2) { width: 74px; height: 74px; top: 36px; }
+  .palette-empty-circle:nth-child(3) { width: 48px; height: 48px; top: 66px; }
+
+  .palette-upload-main {
+    width: 76px;
+    height: 76px;
+  }
+
+  .palette-upload-main svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .palette-result-title {
+    font-size: 1rem;
+  }
+
+  .palette-image-card {
+    width: min(420px, 94vw);
+    border-radius: var(--radius-lg, 18px);
+  }
+}
