@@ -206,8 +206,7 @@
   /* ========== DOM 逻辑 ========== */
   var pageSection, app, emptyState, resultState, fileInput,
       uploadBtn, uploadMainBtn, downloadBtn, resetBtn,
-      resultTitle, resultSubtitle, resultImg, imageCard, toastEl,
-      navbar;
+      resultTitle, resultSubtitle, resultImg, imageCard, toastEl;
   var currentImage = null;
   var currentColor = null;
   var combinedCanvas = null;
@@ -227,7 +226,6 @@
     resultImg = document.getElementById('paletteResultImg');
     imageCard = document.getElementById('paletteImageCard');
     toastEl = document.getElementById('paletteToast');
-    navbar = document.getElementById('navbar');
 
     uploadBtn.addEventListener('click', triggerUpload);
     uploadMainBtn.addEventListener('click', triggerUpload);
@@ -256,9 +254,6 @@
       var file = e.dataTransfer.files[0];
       if (file && file.type.match(/image\//)) loadFile(file);
     });
-
-    // 监听页面切换：离开 palette 时重置背景
-    observePageVisibility();
   }
 
   function triggerUpload() {
@@ -285,43 +280,7 @@
     currentColor = extractDominantColor(currentImage);
     combinedCanvas = renderCombined(currentImage, currentColor);
 
-    applyPaletteTheme(currentColor);
     renderUI(currentColor, combinedCanvas);
-  }
-
-  function applyPaletteTheme(color) {
-    var textColor = getContrastTextColor(color.r, color.g, color.b);
-
-    // 页面背景
-    pageSection.style.setProperty('--palette-bg', color.hex);
-    pageSection.style.setProperty('--palette-text', textColor);
-    pageSection.classList.add('palette-has-image');
-
-    // 导航栏背景
-    if (navbar) {
-      navbar.style.backgroundColor = color.hex;
-      navbar.style.color = textColor;
-      navbar.classList.add('palette-colored');
-    }
-
-    // 隐藏全局背景动画，避免与主色背景冲突
-    var bgAnimation = document.querySelector('.bg-animation');
-    if (bgAnimation) bgAnimation.style.opacity = '0';
-  }
-
-  function resetPaletteTheme() {
-    pageSection.style.removeProperty('--palette-bg');
-    pageSection.style.removeProperty('--palette-text');
-    pageSection.classList.remove('palette-has-image');
-
-    if (navbar) {
-      navbar.style.backgroundColor = '';
-      navbar.style.color = '';
-      navbar.classList.remove('palette-colored');
-    }
-
-    var bgAnimation = document.querySelector('.bg-animation');
-    if (bgAnimation) bgAnimation.style.opacity = '';
   }
 
   function renderUI(color, canvas) {
@@ -343,24 +302,6 @@
     resultImg.src = '';
     resultTitle.textContent = '';
     resultSubtitle.textContent = '';
-
-    resetPaletteTheme();
-  }
-
-  function observePageVisibility() {
-    if (!pageSection) return;
-
-    var observer = new MutationObserver(function (mutations) {
-      mutations.forEach(function (m) {
-        if (m.type === 'attributes' && m.attributeName === 'class') {
-          if (!pageSection.classList.contains('active') && pageSection.classList.contains('palette-has-image')) {
-            resetPaletteTheme();
-          }
-        }
-      });
-    });
-
-    observer.observe(pageSection, { attributes: true, attributeFilter: ['class'] });
   }
 
   function copyToClipboard(text) {
