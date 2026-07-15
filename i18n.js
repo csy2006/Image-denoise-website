@@ -34,6 +34,7 @@ var i18n = (function () {
     navTicket:           { zh: '旅行票根',       en: 'Ticket' },
     navFilter:           { zh: '创意滤镜',       en: 'Filters' },
     navProfile:          { zh: '设置中心',       en: 'Profile' },
+    navPalette:          { zh: '调色盘',         en: 'Palette' },
     statusConnecting:    { zh: '等待后端连接...', en: 'Connecting...' },
     statusConnected:     { zh: '后端已连接',     en: 'Connected' },
     statusError:         { zh: '连接失败',       en: 'Connection failed' },
@@ -179,6 +180,11 @@ var i18n = (function () {
     filterOptions:       { zh: '滤镜选项',       en: 'Filter Options' },
     filterPreview:       { zh: '滤镜预览',       en: 'Filter Preview' },
     filterChangeHint:    { zh: '点击更换照片',   en: 'Click to change photo' },
+
+    /* 调色盘提取 (PhotoColors 风格) */
+    paletteBrand:        { zh: 'PhotoColors',    en: 'PhotoColors' },
+    paletteEmptyTitle:   { zh: 'Moments in Living Color', en: 'Moments in Living Color' },
+    paletteEmptyDesc:    { zh: '为每一刻生动的瞬间，赋予它独一无二的色彩。', en: 'Give every vibrant moment its own unique color.' },
 
     /* 个人中心 */
     profileName:        { zh: 'Young__Yang',                      en: 'Young__Yang' },
