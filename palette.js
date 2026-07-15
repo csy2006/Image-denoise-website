@@ -67,7 +67,7 @@
   }
 
   function extractDominantColor(sourceImg) {
-    var maxDim = 300;
+    var maxDim = 512;                       // 统一分析分辨率，避免设备差异
     var w = sourceImg.naturalWidth;
     var h = sourceImg.naturalHeight;
     var scale = Math.min(maxDim / w, maxDim / h, 1);
@@ -78,6 +78,8 @@
     canvas.width = cw;
     canvas.height = ch;
     var ctx = canvas.getContext('2d');
+    // 关闭图像平滑，用最近邻缩放——跨设备像素完全一致
+    ctx.imageSmoothingEnabled = false;
     ctx.drawImage(sourceImg, 0, 0, cw, ch);
 
     var imageData = ctx.getImageData(0, 0, cw, ch);
@@ -86,17 +88,29 @@
 
     var buckets = {};
     var totalPixels = 0;
-    var SAMPLE_STEP = Math.max(1, Math.floor(Math.sqrt(len / 4) / 150));
 
-    for (var i = 0; i < len; i += 4 * SAMPLE_STEP) {
-      if (data[i + 3] < 128) continue;
-      var key = colorKey(data[i], data[i + 1], data[i + 2]);
+    // 全像素统计，不采样，确保跨设备一致
+    for (var i = 0; i < len; i += 4) {
+      var r = data[i];
+      var g = data[i + 1];
+      var b = data[i + 2];
+      var a = data[i + 3];
+
+      // 跳过透明、纯白、纯黑、接近灰白的像素，避免天空/阴影主导
+      if (a < 128) continue;
+      var maxc = Math.max(r, g, b);
+      var minc = Math.min(r, g, b);
+      if (maxc > 245 && minc > 245) continue;     // 接近纯白
+      if (maxc < 15 && minc < 15) continue;       // 接近纯黑
+      if (maxc - minc < 8) continue;              // 接近无色彩 gray
+
+      var key = colorKey(r, g, b);
       if (!buckets[key]) {
         buckets[key] = { rSum: 0, gSum: 0, bSum: 0, freq: 0 };
       }
-      buckets[key].rSum += data[i];
-      buckets[key].gSum += data[i + 1];
-      buckets[key].bSum += data[i + 2];
+      buckets[key].rSum += r;
+      buckets[key].gSum += g;
+      buckets[key].bSum += b;
       buckets[key].freq++;
       totalPixels++;
     }
