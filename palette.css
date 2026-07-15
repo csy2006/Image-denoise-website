@@ -3,14 +3,7 @@
 #page-palette {
   overflow-y: auto !important;
   overflow-x: hidden;
-  /* 默认：使用站点背景（透明，透出 bg-animation） */
   background: transparent;
-  transition: background-color 0.6s ease;
-}
-
-/* 上传图片后：背景变为主色调 */
-#page-palette.palette-has-image {
-  background: var(--palette-bg, var(--page-bg, #fdf8f4));
 }
 
 .palette-app {
@@ -38,12 +31,6 @@
   font-weight: 700;
   color: var(--ink);
   letter-spacing: -0.02em;
-  transition: color 0.4s ease;
-}
-
-#page-palette.palette-has-image .palette-brand {
-  color: var(--palette-text, var(--ink));
-  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 
 .palette-header-actions {
@@ -80,16 +67,6 @@
 .palette-header-btn svg {
   width: 20px;
   height: 20px;
-}
-
-#page-palette.palette-has-image .palette-header-btn {
-  color: var(--palette-text, var(--ink));
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.28);
-}
-
-#page-palette.palette-has-image .palette-header-btn:hover {
-  background: rgba(255,255,255,0.3);
 }
 
 /* ==================== 空状态 ==================== */
@@ -216,16 +193,14 @@
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 600;
-  color: var(--palette-text, var(--ink));
-  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  color: var(--ink);
   margin-bottom: 0.35rem;
 }
 
 .palette-result-subtitle {
   font-size: 0.8rem;
-  color: var(--palette-text, var(--ink-faded));
+  color: var(--ink-faded);
   opacity: 0.85;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
 
 .palette-image-card {
@@ -244,21 +219,6 @@
 .palette-image-card img {
   width: 100%;
   display: block;
-}
-
-/* ==================== 导航栏在主色调模式下 ==================== */
-.navbar.palette-colored {
-  transition: background-color 0.5s ease, color 0.5s ease;
-}
-
-.navbar.palette-colored .nav-title,
-.navbar.palette-colored .nav-title a,
-.navbar.palette-colored .nav-link {
-  color: inherit;
-}
-
-.navbar.palette-colored .nav-icon {
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
 }
 
 /* ==================== Toast ==================== */
