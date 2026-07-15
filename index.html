@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="filter.css" />
   <link rel="stylesheet" href="ticket.css" />
   <link rel="stylesheet" href="profile.css" />
+  <link rel="stylesheet" href="palette.css" />
   <link rel="icon" href="./002.jpg" type="image/x-icon">
   <!-- 同步检测系统主题（在 CSS 加载前执行，避免闪白） -->
   <script>
@@ -47,7 +48,7 @@
 
 
 <!-- 欢迎遮罩 -->
-<!-- <div class="welcome-overlay" id="welcomeOverlay" onclick="var o=this;if(o._d)return;o._d=1;o.style.pointerEvents='none';o.classList.add('fade-out');var h=document.getElementById('page-home');if(h){var e=h.querySelectorAll('.hero-kanji,.word,.hero-subtitle,.hero-actions');for(var i=0;i<e.length;i++){e[i].style.animation='none';e[i].offsetHeight;e[i].style.animation=''}}setTimeout(function(){o.remove();var n=document.querySelector('.nav-link[data-page=home]');if(n)n.classList.add('active')},600)">
+<div class="welcome-overlay" id="welcomeOverlay" onclick="var o=this;if(o._d)return;o._d=1;o.style.pointerEvents='none';o.classList.add('fade-out');var h=document.getElementById('page-home');if(h){var e=h.querySelectorAll('.hero-kanji,.word,.hero-subtitle,.hero-actions');for(var i=0;i<e.length;i++){e[i].style.animation='none';e[i].offsetHeight;e[i].style.animation=''}}setTimeout(function(){o.remove();var n=document.querySelector('.nav-link[data-page=home]');if(n)n.classList.add('active')},600)">
   <div class="welcome-bg-circle welcome-bg-circle-1"></div>
   <div class="welcome-bg-circle welcome-bg-circle-2"></div>
   <div class="welcome-bg-circle welcome-bg-circle-3"></div>
@@ -57,7 +58,7 @@
   </div>
     <div class="welcome-hint" id="welcomeHint" data-i18n="welcomeHint">点击任意位置进入</div>
   </div>
-</div> -->
+</div>
 
 <!-- 背景动画 -->
 <div class="bg-animation">
@@ -71,7 +72,7 @@
   <div class="nav-brand" id="navBrand">
     <div class="nav-brand-row">
       <img src="002.jpg" class="nav-icon" onclick="switchPage('home')" style="cursor:pointer;width:22px;height:22px;" alt="logo">
-      <span class="nav-title"><a href="#" onclick="switchPage('home'); return false;">PrismDen <em data-i18n="brandTag"> · 棱镜降噪</em></a></span>
+      <span class="nav-title"><a href="#" onclick="switchPage('home'); return false;"><em data-i18n="brandTag">PrismDen</em></a></span>
     </div>
   </div>
   <div class="nav-links" id="navLinks">
@@ -82,15 +83,16 @@
     <span class="nav-link" data-page="result" data-i18n="navResult">降噪结果</span>
     <span class="nav-link" data-page="ticket" data-i18n="navTicket">旅行票根</span>
     <span class="nav-link" data-page="filter" data-i18n="navFilter">创意滤镜</span>
+    <span class="nav-link" data-page="palette" data-i18n="navPalette">调色盘</span>
     <span class="nav-link" data-page="profile" data-i18n="navProfile">设置中心</span>
   </div>
   <div class="nav-right">
-    <div class="nav-status" id="statusBar">
+    <!-- <div class="nav-status" id="statusBar">
       <div class="status-dot" id="statusDot"></div>
       <span id="statusText" data-i18n="statusConnecting">等待后端连接...</span>
-    </div>
+    </div> -->
     <!-- <button class="nav-ping-btn" onclick="pingBackend()">检测服务</button> -->
-    <button class="volume-btn" id="volumeBtn" onclick="toggleSound()" title="音效开关">
+    <!-- <button class="volume-btn" id="volumeBtn" onclick="toggleSound()" title="音效开关">
       <svg class="volume-on" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
         <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
@@ -101,7 +103,7 @@
         <line x1="23" y1="9" x2="17" y2="15"></line>
         <line x1="17" y1="9" x2="23" y2="15"></line>
       </svg>
-    </button>
+    </button> -->
   </div>
 </nav>
 
@@ -933,6 +935,58 @@
   </main>
 </section><!-- end #page-profile -->
 
+<!-- ==================== Page: 调色盘提取 (PhotoColors 风格) ==================== -->
+<section class="page-section" id="page-palette" data-page="palette">
+
+  <div class="palette-app" id="paletteApp">
+    <!-- 顶部操作栏 -->
+    <div class="palette-header">
+      <div class="palette-brand" data-i18n="paletteBrand">PhotoColors</div>
+      <div class="palette-header-actions">
+        <button class="palette-header-btn" id="paletteUploadBtn" title="上传图片" aria-label="上传图片">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+        <button class="palette-header-btn" id="paletteDownloadBtn" title="保存合成图" aria-label="保存合成图">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        </button>
+        <button class="palette-header-btn" id="paletteResetBtn" title="重新上传" aria-label="重新上传">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div class="palette-empty" id="paletteEmptyState">
+      <div class="palette-empty-circles">
+        <div class="palette-empty-circle"></div>
+        <div class="palette-empty-circle"></div>
+        <div class="palette-empty-circle"></div>
+      </div>
+      <h1 class="palette-empty-title" data-i18n="paletteEmptyTitle">Moments in Living Color</h1>
+      <p class="palette-empty-desc" data-i18n="paletteEmptyDesc">为每一刻生动的瞬间，赋予它独一无二的色彩。</p>
+      <button class="palette-upload-main" id="paletteUploadMainBtn" aria-label="上传图片">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </button>
+      <input type="file" id="paletteFileInput" accept="image/*" style="display:none">
+    </div>
+
+    <!-- 结果状态 -->
+    <div class="palette-result" id="paletteResultState">
+      <div class="palette-result-meta">
+        <div class="palette-result-title" id="paletteResultTitle"></div>
+        <div class="palette-result-subtitle" id="paletteResultSubtitle"></div>
+      </div>
+      <div class="palette-image-card" id="paletteImageCard">
+        <img id="paletteResultImg" alt="palette result">
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="palette-toast" id="paletteToast"></div>
+
+</section><!-- end #page-palette -->
+
 <!-- 底部版权（固定底部，不撑开高度） -->
 <div class="site-footer" data-i18n="footer">© 2026 Young__Yang. All rights reserved.</div>
 
@@ -962,6 +1016,7 @@
 <script src="main.js"></script>
 <script src="filter.js"></script>
 <script src="profile.js"></script>
+<script src="palette.js"></script>
 <!-- ticket.js 的功能已整合到 main.js 的 ticket IIFE 中，此处不再单独加载 -->
 </body>
 </html>
