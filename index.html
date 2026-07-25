@@ -32,9 +32,7 @@
       var prefersDark = false;
       try { prefersDark = window.matchMedia(mq).matches; } catch(e) {}
       // iOS 微信 X5 内核不支持 matchMedia → 用 CSS env() 检测（Safari 支持）
-      // 最简方案：直接设 data-theme，让 CSS 里的 @media 决定实际颜色
-      // 但我们需要在这里就决定，所以用 getComputedStyle 不可行
-      // 最终方案：先设一个默认值，CSS 加载后会覆盖
+      // 先设一个默认值，CSS 加载后会覆盖
       if (prefersDark) {
         document.documentElement.setAttribute('data-theme', 'dark');
         sessionStorage.setItem('_themeAuto', '1');
@@ -45,7 +43,6 @@
   <script src="exif.js"></script>
 </head>
 <body>
-
 
 <!-- 欢迎遮罩 -->
 <div class="welcome-overlay" id="welcomeOverlay" onclick="var o=this;if(o._d)return;o._d=1;o.style.pointerEvents='none';o.classList.add('fade-out');var h=document.getElementById('page-home');if(h){var e=h.querySelectorAll('.hero-kanji,.word,.hero-subtitle,.hero-actions');for(var i=0;i<e.length;i++){e[i].style.animation='none';e[i].offsetHeight;e[i].style.animation=''}}setTimeout(function(){o.remove();var n=document.querySelector('.nav-link[data-page=home]');if(n)n.classList.add('active')},600)">
@@ -107,7 +104,7 @@
   </div>
 </nav>
 
-<!-- ==================== Page 1: 首页 ==================== -->
+<!-- 1: 首页 -->
 <section class="page-section active" id="page-home" data-page="home">
 
   <section class="hero">
@@ -141,9 +138,9 @@
       <!-- <span style="font-size:0.82rem; color:var(--stone); letter-spacing:0.08em;">向下滚动查看详情</span> -->
     </div>
   </section>
-</section><!-- end #page-home -->
+</section>
 
-<!-- ==================== Page 2: 核心特性 ==================== -->
+<!-- 2: 核心特性 -->
 <section class="page-section" id="page-features" data-page="features">
 
   <main class="page-main">
@@ -173,9 +170,9 @@
     </div>
   </main>
 
-</section><!-- end #page-features -->
+</section>
 
-<!-- ==================== Page: 参数指南 ==================== -->
+<!-- 2: 参数指南 -->
 <section class="page-section" id="page-guide" data-page="guide">
 
   <main class="page-main">
@@ -242,10 +239,9 @@
       <button class="btn btn-primary btn-lg" onclick="switchPage('upload')" data-i18n="btnGoParams">去调整参数 →</button>
     </div>
   </main>
+</section>
 
-</section><!-- end #page-guide -->
-
-<!-- ==================== Page 3: 上传处理 ==================== -->
+<!-- 3: 上传处理 -->
 <section class="page-section" id="page-upload" data-page="upload">
 
   <main class="page-main page-main-wide">
@@ -378,9 +374,9 @@
     </div>
   </main>
 
-</section><!-- end #page-upload -->
+</section>
 
-<!-- ==================== Page 4: 处理结果 ==================== -->
+<!-- 4: 处理结果 -->
 <section class="page-section" id="page-result" data-page="result">
 
   <main class="page-main" id="mainContent">
@@ -527,7 +523,7 @@
 
 </section><!-- end #page-result -->
 
-<!-- ==================== Page: 旅行票根 ==================== -->
+<!-- 5: 旅行票根 -->
 <section class="page-section" id="page-ticket" data-page="ticket">
 
   <div class="ticket-page">
@@ -645,7 +641,7 @@
   <div class="ticket-mobile-backdrop" id="ticketMobileBackdrop"></div>
 </section><!-- end #page-ticket -->
 
-<!-- ==================== Page: 创意滤镜 ==================== -->
+<!-- 7: 创意滤镜 -->
 <section class="page-section" id="page-filter" data-page="filter">
 
   <div class="filter-page">
@@ -793,7 +789,7 @@
   <div class="filter-mobile-backdrop" id="filterMobileBackdrop"></div>
 </section><!-- end #page-filter -->
 
-<!-- ==================== Page: 个人中心 ==================== -->
+<!-- 8: 设置中心 -->
 <section class="page-section" id="page-profile" data-page="profile">
   <main class="page-main profile-main">
     <div class="profile-container">
@@ -811,36 +807,36 @@
       </div>
       <div class="profile-body" id="profileBody">
         <!-- 统计卡片 -->
-        <div class="profile-section">
+        <!-- <div class="profile-section">
           <h3 class="profile-section-title"><span data-i18n="statTitle">使用统计</span></h3>
           <div class="profile-stats">
-            <div class="stat-card">
+            <div class="stat-card"> -->
               <!-- <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>
                 <line x1="12" y1="3" x2="12" y2="15"/>
               </svg> -->
-              <span class="stat-value" id="statDenoise">0</span>
+              <!-- <span class="stat-value" id="statDenoise">0</span>
               <span class="stat-label" data-i18n="statDenoise">图像降噪</span>
             </div>
-            <div class="stat-card">
+            <div class="stat-card"> -->
               <!-- <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94"/>
               </svg> -->
-              <span class="stat-value" id="statFilter">0</span>
+              <!-- <span class="stat-value" id="statFilter">0</span>
               <span class="stat-label" data-i18n="statFilter">创意滤镜</span>
             </div>
-            <div class="stat-card">
+            <div class="stat-card"> -->
               <!-- <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg> -->
-              <span class="stat-value" id="statTicket">0</span>
+              <!-- <span class="stat-value" id="statTicket">0</span>
               <span class="stat-label" data-i18n="statTicket">旅行票根</span>
             </div>
           </div>
-        </div>
+        </div> -->
 
         <!-- 设置 -->
         <div class="profile-section">
@@ -933,9 +929,9 @@
       </div>
     </div>
   </main>
-</section><!-- end #page-profile -->
+</section>
 
-<!-- ==================== Page: 调色盘提取 (PhotoColors 风格) ==================== -->
+<!-- 8: 调色盘提取 -->
 <section class="page-section" id="page-palette" data-page="palette">
 
   <div class="palette-app" id="paletteApp">
@@ -982,22 +978,18 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="palette-toast" id="paletteToast"></div>
 
-</section><!-- end #page-palette -->
+</section>
 
 <!-- 底部版权（固定底部，不撑开高度） -->
 <div class="site-footer" data-i18n="footer">© 2026 Young__Yang. All rights reserved.</div>
-
-<!-- ==================== Global Overlays ==================== -->
 
 <!-- Toast -->
 <div class="toast-container" id="toastContainer">
   <div class="toast hidden" id="toast"></div>
 </div>
 
-<!-- Compare Overlay -->
 <div class="compare-overlay hidden" id="compareOverlay">
   <div class="compare-container" id="compareContainer">
     <canvas id="compareOriginal" class="compare-canvas"></canvas>
@@ -1017,6 +1009,5 @@
 <script src="filter.js"></script>
 <script src="profile.js"></script>
 <script src="palette.js"></script>
-<!-- ticket.js 的功能已整合到 main.js 的 ticket IIFE 中，此处不再单独加载 -->
 </body>
 </html>
