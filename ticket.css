@@ -1,4 +1,4 @@
-/* ==================== 票根页面布局 ==================== */
+/*票根页面布局 */
 
 /* 页面容器：紧贴导航栏，禁止滚动 */
 #page-ticket {
@@ -11,7 +11,7 @@
   gap: 0;
 }
 
-/* ==================== 左侧面板 ==================== */
+/* 左侧面板 */
 .ticket-panel {
   width: 420px;
   min-width: 420px;
@@ -43,7 +43,7 @@
   font-weight: 300;
 }
 
-/* ==================== 上传区域 ==================== */
+/* 上传区域 */
 .upload-zone {
   border: 2px dashed var(--orange-border);
   border-radius: var(--radius-lg);
@@ -88,7 +88,7 @@
   margin-top: 0.5rem;
 }
 
-/* ==================== 编辑器 ==================== */
+/* 编辑器 */
 .ticket-editor {
   animation: fadeSlideIn 0.4s ease;
 }
@@ -211,7 +211,7 @@
   color: var(--ink);
 }
 
-/* ==================== 右侧预览区 ==================== */
+/* 右侧预览区 */
 .ticket-preview-area {
   flex: 1;
   display: flex;
@@ -234,7 +234,7 @@
   color: var(--stone);
 }
 
-/* ==================== 票根容器 ==================== */
+/* 票根容器 */
 .ticket-container {
   width: 100%;
   max-width: 820px;
@@ -243,7 +243,7 @@
   padding-right: 16px;  /* 给撕边效果留空间 */
 }
 
-/* ==================== 票根 ==================== */
+/* 票根 */
 /*
   字体缩放策略：
   - 所有文字大小使用 vw + clamp()，直接随视口/票根宽度等比缩放
@@ -308,7 +308,7 @@
   border-radius: 0;
 }
 
-/* ==================== 票根照片区域 ==================== */
+/* 票根照片区域 */
 .ticket-photo {
   position: relative;
   overflow: hidden;
@@ -325,7 +325,7 @@
   display: block;
 }
 
-/* ==================== 票根信息区域 ==================== */
+/* 票根信息区域 */
 .ticket-info {
   position: relative;
   padding: 1.8em 1.5em;
@@ -335,7 +335,7 @@
   overflow: hidden;
 }
 
-/* ==================== 撕票边缘效果（整体右边缘） ==================== */
+/* 撕票边缘效果（整体右边缘） */
 /* 用 clip-path 给整个票根右边缘加不规则撕口 */
 .ticket-inner {
   width: 100%;
@@ -393,7 +393,7 @@
   -webkit-mask-size: 100% 100%;
 }
 
-/* ==================== 艺术字 ==================== */
+/* 艺术字 */
 /* 所有字号用 vw + clamp 直接随票根宽度等比缩放，不再依赖 base font-size 的 em 级联 */
 .ticket-destination-en {
   font-family: 'Playfair Display', 'Cormorant Garamond', 'Georgia', serif;
@@ -489,7 +489,7 @@
   /* 上部信息 */
 }
 
-/* ==================== 竖向布局调整 ==================== */
+/* 竖向布局调整 */
 .ticket.layout-vertical .ticket-photo {
   max-height: 55vh;
 }
@@ -503,7 +503,7 @@
   font-size: clamp(18px, 3.4vw, 32px);
 }
 
-/* ==================== 移动端适配 ==================== */
+/*移动端适配 */
 /*
   核心：票根长宽比始终不变(960:400)，所有文字用 vw+clamp 自动等比缩放。
   此处只处理两件事：
@@ -534,7 +534,7 @@
     overflow: visible !important;
   }
 
-  /* ===== 主页面票根：宽度适配屏幕，不旋转 ===== */
+  /* 主页面票根：宽度适配屏幕，不旋转 */
   .ticket-container {
     width: 100%;
     max-width: 100%;
@@ -553,7 +553,7 @@
   .ticket.layout-horizontal .ticket-info::before { display: none !important; }
   .ticket.layout-vertical .ticket-info::before { display: none !important; }
 
-  /* ---- info区文字 — 宽度适配屏幕后用 vw 等比缩放 ---- */
+  /* info区文字 — 宽度适配屏幕后用 vw 等比缩放 */
   .ticket.layout-horizontal .ticket-info {
     padding: 0.8em 0.8em !important;
     justify-content: flex-start !important;
@@ -588,7 +588,7 @@
     font-size: clamp(7px, 1.7vw, 10px) !important;
   }
 
-  /* ===== 弹窗内票根预览：宽度适配，不旋转 ===== */
+  /* 弹窗内票根预览：宽度适配，不旋转 */
   .ticket-sheet-preview {
     width: 100%;
     margin-top: 0.25rem;
@@ -679,7 +679,7 @@
   /* 字号已由 vw+clamp 自动处理，无需额外覆盖 */
 }
 
-/* ==================== 横屏适配 ==================== */
+/* 横屏适配 */
 @media (max-height: 500px) and (orientation: landscape) {
   .ticket-page {
     flex-direction: row;
