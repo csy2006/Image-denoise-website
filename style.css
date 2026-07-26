@@ -840,6 +840,7 @@ body {
   box-shadow: 0 2px 14px rgba(196, 104, 58, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
   background: rgba(196, 104, 58, 0.16);
+  color: var(--orange);
   color: var(--orange-dark);
   white-space: nowrap;
   letter-spacing: 0.02em;
