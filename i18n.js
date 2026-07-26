@@ -22,7 +22,7 @@ var i18n = (function () {
   var dict = {
 
     /* 欢迎遮罩 */
-    welcomeSubtitle:    { zh: '棱镜降噪 · 图像降噪处理平台',       en: 'PrismDen · Image Denoising Platform' },
+    // welcomeSubtitle:    { zh: '棱镜降噪 · 图像降噪处理平台',       en: 'PrismDen · Image Denoising Platform' },
     welcomeHint:        { zh: '点击任意位置进入',                   en: 'Click anywhere to enter' },
 
     /* 导航栏 */
