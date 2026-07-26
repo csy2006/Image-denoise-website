@@ -202,7 +202,7 @@ var i18n = (function () {
     vibrateOn:          { zh: '已开启',         en: 'On' },
     vibrateOff:         { zh: '已关闭',         en: 'Off' },
     vibrateiOS:         { zh: 'iOS设备暂不支持', en: 'Not supported on iOS' },
-    langTitle:           { zh: '语言 / Language', en: 'Language / 语言' },
+    langTitle:           { zh: '语言', en: 'Language' },
     langZh:             { zh: '中文',           en: '中文' },
     langEn:             { zh: 'English',        en: 'English' },
     aboutTitle:          { zh: '关于项目',       en: 'About' },
