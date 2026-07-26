@@ -1,20 +1,20 @@
-/* ==================== 个人中心样式 ==================== */
+/*  个人中心 */
 
-/* —— 页面主容器 —— */
+/* 页面主容器 */
 .profile-main {
   max-width: 720px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
 
-/* —— 卡片容器 —— */
+/* 卡片容器 */
 .profile-container {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-/* —— 头部：头像 + 名称 —— */
+/* 头部：头像 + 名称 */
 .profile-header {
   display: flex;
   flex-direction: column;
@@ -29,7 +29,7 @@
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.06);
 }
 
-/* —— 头像 —— */
+/* 头像 */
 .profile-avatar-wrap {
   position: relative;
 }
@@ -63,7 +63,7 @@
   object-fit: cover;
 }
 
-/* —— 名称 & 简介 —— */
+/* 名称 & 简介 */
 .profile-name {
   font-size: 1.35rem;
   font-weight: 600;
@@ -78,7 +78,7 @@
   text-align: center;
 }
 
-/* —— 统计卡片 —— */
+/* 统计卡片 */
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -122,7 +122,7 @@
   color: var(--ink-faded, #A8A49C);
 }
 
-/* —— 分区标题 —— */
+/* 分区标题 */
 .profile-section {
   display: flex;
   flex-direction: column;
@@ -139,7 +139,7 @@
   padding-left: 0.25rem;
 }
 
-/* —— 设置列表 —— */
+/* 设置列表 */
 .settings-list {
   display: flex;
   flex-direction: column;
@@ -199,7 +199,7 @@
   margin-top: 0.15rem;
 }
 
-/* —— 提示标签（如 iOS设备暂不支持）—— */
+/* 提示标签（如 iOS设备暂不支持）*/
 .settings-tag {
   font-size: 0.65rem;
   color: var(--ink-faded, #A8A49C);
@@ -216,7 +216,7 @@
   color: #A8A49C;
 }
 
-/* —— 开关组件 —— */
+/* 开关组件 */
 .settings-toggle {
   width: 46px;
   height: 26px;
@@ -248,7 +248,7 @@
   transform: translateX(20px);
 }
 
-/* —— 关于项目卡片 —— */
+/* 关于项目卡片 */
 .about-card {
   display: flex;
   flex-direction: column;
@@ -283,7 +283,7 @@
   word-break: break-word;
 }
 
-/* —— 操作按钮 —— */
+/* 操作按钮 */
 .profile-action-btn {
   width: 100%;
   padding: 0.9rem;
@@ -302,7 +302,7 @@
   background: rgba(211, 47, 47, 0.12);
 }
 
-/* ==================== 深色模式 ==================== */
+/* 深色模式 */
 [data-theme="dark"] .profile-header,
 [data-theme="dark"] .stat-card,
 [data-theme="dark"] .settings-item,
@@ -357,7 +357,7 @@
   color: #ef5350;
 }
 
-/* ==================== 移动端适配 ==================== */
+/* 移动端适配 */
 @media (max-width: 900px) {
   .profile-main {
     padding: 1.5rem 1rem 3rem;
