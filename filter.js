@@ -1,8 +1,8 @@
-/* ==================== 创意滤镜引擎 ==================== */
+/* 创意滤镜 */
 (function() {
   'use strict';
 
-  /* ── DOM 引用 ── */
+  /* DOM 引用 */
   const uploadZone   = document.getElementById('filterUploadZone');
   const fileInput    = document.getElementById('filterFileInput');
   const filterEditorBlk  = document.getElementById('filterEditorBlock');
@@ -13,20 +13,20 @@
   const uploadPreview = document.getElementById('filterUploadPreview');
   const uploadPreviewImg = document.getElementById('filterUploadPreviewImg');
 
-  /* ── 状态 ── */
+  /* 状态 */
   var _fImage     = null;   // 原始图片 Image 对象
   var _fDataURL   = null;   // 原始图片 dataURL
   var _fActiveFilter = null; // 当前激活的滤镜 key
   var _fCanvas    = null;   // 处理用的离屏 canvas
   var _fCtx       = null;
 
-  /* ── 微信检测 ── */
+  /* 微信检测 */
   var _isWeChat = /MicroMessenger/i.test(navigator.userAgent);
 
-  /* ── 滤镜预设定义 ── */
+  /* 滤镜预设定义 */
   /* category: "sony" = 索尼创意外观 | "film" = 人像胶片模拟 */
   var FILTERS = {
-    /* ========== 索尼创意外观 ========== */
+    /*  索尼创意外观 */
     'FL': {
       label: 'Flat 柔和',
       desc:  '低对比 · 柔和淡雅',
@@ -123,7 +123,7 @@
       }
     },
 
-    /* ========== 人像胶片模拟 ========== */
+    /* 人像胶片模拟 */
     'PT': {
       label: 'Portra 人像',
       desc:  '柔和肤色 · 暖调 · 低反差',
@@ -449,7 +449,7 @@
     reader.readAsDataURL(file);
   }
 
-  /* ── 下载滤镜结果 ── */
+  /* 下载滤镜结果 */
   window.downloadFilterResult = function() {
     if (!_fCanvas || !_fCtx) return;
 
@@ -466,7 +466,7 @@
     }
   };
 
-  /* ── 微信长按保存 ── */
+  /* 微信长按保存 */
   function _wechatSaveImage(dataURL) {
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);'
@@ -501,7 +501,7 @@
     document.body.appendChild(overlay);
   }
 
-  /* ── 重置（"重新上传"按钮） ── */
+  /* 重置（"重新上传"按钮） */
   window.resetFilterAll = function() {
     _fImage = null;
     _fDataURL = null;
@@ -542,7 +542,7 @@
     if (fileInput) fileInput.value = '';
   };
 
-  /* ── 预设按钮点击 ── */
+  /* 预设按钮点击 */
   document.querySelectorAll('.filter-preset-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var key = this.getAttribute('data-filter');
@@ -555,7 +555,7 @@
     });
   });
 
-  /* ── 液态玻璃药丸定位 + 灵动放大 ── */
+  /* 液态玻璃药丸定位 + 灵动放大 */
   function positionFilterPill() {
     var pill = document.querySelector('.filter-category-pill');
     var activeTab = document.querySelector('.filter-category-tab.active');
@@ -588,7 +588,7 @@
     }, 200);
   }
 
-  /* ── 滤镜类别 Tab 切换 ── */
+  /* 滤镜类别 Tab 切换 */
   document.querySelectorAll('.filter-category-tab').forEach(function(tab) {
     tab.addEventListener('click', function() {
       if (typeof vibrate === 'function') vibrate(6);
@@ -627,7 +627,7 @@
     _filterPillResizeTimer = setTimeout(positionFilterPill, 150);
   });
 
-  /* ── 上传区域交互 ── */
+  /* 上传区域交互 */
   if (uploadZone && fileInput) {
     uploadZone.addEventListener('click', function() { fileInput.click(); });
 
@@ -653,8 +653,7 @@
     });
   }
 
-  /* ==================== 移动端底部弹窗 ==================== */
-
+  /* 移动端底部弹 */
   /* ── 打开弹窗（从底部升起 → 半屏，带动画）── */
   window.openFilterSheet = function() {
     var panel = document.getElementById('filterPanel');
@@ -746,7 +745,7 @@
     unlockBodyForSheet();
 
     // 等待动画完成（350ms）后再移回 DOM + 清理 dragging
-    // 注意：如果在动画期间用户又打开了弹窗，跳过移动
+    // 注意：如果在动画期间又打开了弹窗，跳过移动
     var _closeTimer = setTimeout(function() {
       // 如果面板又被重新打开了（sheet-open），不要移动
       if (panel.classList.contains('sheet-open')) return;
@@ -769,7 +768,7 @@
     panel._closeTimer = _closeTimer;
   };
 
-  /* ── 切换弹窗 ── */
+  /* 切换弹窗 */
   window.toggleFilterMobileSheet = function() {
     var panel = document.getElementById('filterPanel');
     if (panel && panel.classList.contains('sheet-open')) {
@@ -779,7 +778,7 @@
     }
   };
 
-  /* ── 切换全屏展开（带动画）── */
+  /* 切换全屏展开（带动画） */
   window.toggleFilterSheetExpand = function() {
     var panel = document.getElementById('filterPanel');
     if (!panel || !panel.classList.contains('sheet-open')) return;
@@ -804,7 +803,7 @@
     }
   };
 
-  /* ── 锁 / 解锁 body ── */
+  /* 锁 / 解锁 body */
   function lockBodyForSheet() {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
@@ -823,7 +822,7 @@
     if (navbar) navbar.classList.remove('sheet-visible');
   }
 
-  /* ── 弹窗拖拽 ── */
+  /* 弹窗拖拽 */
   function initFilterSheetDrag() {
     var panel = document.getElementById('filterPanel');
     var backdrop = document.getElementById('filterMobileBackdrop');
@@ -928,7 +927,7 @@
     }
   }
 
-  /* ── 展开按钮 ── */
+  /* 展开按钮 */
   var expandBtn = document.getElementById('filterExpandBtn');
   if (expandBtn) {
     expandBtn.addEventListener('click', function(e) {
@@ -938,9 +937,8 @@
     });
   }
 
-  /* ==================== 初始化 ==================== */
+  /* 初始化 */
   document.addEventListener('DOMContentLoaded', function() {
     initFilterSheetDrag();
   });
-
 })();
