@@ -1,7 +1,6 @@
-/* ==================== 个人中心 JavaScript ==================== */
+/* 个人中心 */
 /**
- * profile.js — 个人中心模块
- * 功能：统计展示、深色模式开关、震动反馈开关、本地数据清除
+ * 功能：深色模式开关、震动反馈开关、本地数据清除
  * 主题切换复用 main.js 的 setTheme() 函数，localStorage key = 'theme'
  */
 
@@ -10,7 +9,7 @@
 
   var _initialized = false;
 
-  // ── 本地存储 key ──
+  // 本地存储 key
   var SK_DENOISE = 'prismden_count_denoise';
   var SK_FILTER   = 'prismden_count_filter';
   var SK_TICKET   = 'prismden_count_ticket';
@@ -18,7 +17,7 @@
   var SK_VIBRATE  = 'prismden_vibrate';     // '1' | '0'
   var SK_LANG     = 'prismden_lang';        // 'zh' | 'en'
 
-  /* ── 工具：安全读写 localStorage ── */
+  /* 工具：安全读写 localStorage */
   function lsGet(key, def) {
     try { var v = localStorage.getItem(key); return v === null ? def : v; }
     catch (e) { return def; }
@@ -27,7 +26,7 @@
     try { localStorage.setItem(key, val); } catch (e) {}
   }
 
-  /* ── 统计计数器（供 main.js / filter.js 调用）── */
+  /* 统计计数器（供 main.js / filter.js 调用） */
   window.PrismDenStats = {
     incDenoise: function () {
       var n = parseInt(lsGet(SK_DENOISE, '0'), 10) + 1;
@@ -57,7 +56,7 @@
     updateStat('statTicket', parseInt(lsGet(SK_TICKET, '0'), 10));
   }
 
-  /* ── 深色模式开关（复用 main.js setTheme）── */
+  /* 深色模式开关（复用 main.js setTheme）*/
   function initThemeToggle() {
     var item = document.getElementById('themeToggle');
     if (!item) return;
@@ -111,7 +110,7 @@
     updateThemeDesc(item, isDark);
   }
 
-  /* ── 震动反馈开关 ── */
+  /* 震动反馈开关 */
   function initVibrateToggle() {
     var item = document.getElementById('vibrateToggle');
     if (!item) return;
@@ -142,7 +141,7 @@
     });
   }
 
-  /* ── 语言切换开关 ── */
+  /* 语言切换开关 */
   function updateLangDesc(item, isZh) {
     var desc = item.querySelector('.settings-desc');
     if (!desc) return;
@@ -182,7 +181,7 @@
     });
   }
 
-  /* ── 清除本地数据 ── */
+  /* 清除本地数据 */
   function initClearData() {
     var btn = document.getElementById('clearDataBtn');
     if (!btn) return;
@@ -202,7 +201,7 @@
     });
   }
 
-  /* ── 初始化 ── */
+  /* 初始化 */
   function initProfile() {
     if (_initialized) return;
     _initialized = true;
@@ -215,7 +214,7 @@
     initThemeObserver();
   }
 
-  /* ── 监听 data-theme 变化，同步 toggle 状态 ── */
+  /* 监听 data-theme 变化，同步 toggle 状态 */
   function initThemeObserver() {
     var item = document.getElementById('themeToggle');
     if (!item) return;
@@ -245,7 +244,7 @@
     } catch (e) {}
   }
 
-  /* ── 页面进入/离开回调 ── */
+  /* 页面进入/离开回调 */
   window.onProfilePageEnter = function () {
     initProfile();
     loadStats(); // 每次进入刷新统计
@@ -257,7 +256,7 @@
 
   window.onProfilePageLeave = function () {};
 
-  /* ── 自动初始化 ── */
+  /* 自动初始化 */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initProfile);
   } else {
