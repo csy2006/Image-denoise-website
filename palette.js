@@ -1,4 +1,4 @@
-/* ==================== 调色盘提取模块 (PhotoColors 风格) ==================== */
+/* 调色盘提取 */
 /**
  * palette.js — PrismDen 调色盘提取
  * 算法流程：
@@ -14,7 +14,7 @@
 (function () {
   'use strict';
 
-  /* ========== MaxHeap ========== */
+  /*  MaxHeap */
   function MaxHeap() { this.heap = []; }
 
   MaxHeap.prototype.push = function (item) {
@@ -58,7 +58,7 @@
     }
   };
 
-  /* ========== 色彩提取 ========== */
+  /* 色彩提取 */
   var COLOR_LEVELS = 16;
   var BIN_SHIFT = 4;
 
@@ -144,7 +144,7 @@
     return '#' + hr + hg + hb;
   }
 
-  /* ========== 颜色工具 ========== */
+  /* 颜色工具 */
   function getLuminance(r, g, b) {
     return 0.299 * r + 0.587 * g + 0.114 * b;
   }
@@ -153,7 +153,7 @@
     return getLuminance(r, g, b) > 128 ? '#1a1a1a' : '#ffffff';
   }
 
-  /* ========== 合成图绘制（上半色块 + 下半原图） ========== */
+  /* 合成图绘制（上半色块 + 下半原图） */
   var MAX_OUT_W = 1200;
 
   function renderCombined(sourceImg, color) {
@@ -203,7 +203,7 @@
     return canvas;
   }
 
-  /* ========== DOM 逻辑 ========== */
+  /* DOM 逻辑 */
   var pageSection, app, emptyState, resultState, fileInput,
       uploadBtn, uploadMainBtn, downloadBtn, resetBtn,
       resultTitle, resultSubtitle, resultImg, imageCard, toastEl;
