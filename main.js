@@ -314,7 +314,7 @@ function initBouncingHint() {
     const t = randTarget();
     spring.tx = t.x;
     spring.ty = t.y;
-    // 安排下一次弹跳：500-800ms（更快节奏）
+    // 安排下一次弹跳：500-800ms
     hintTargetTimer = setTimeout(bounce, 500 + Math.random() * 300);
   }
   hintTargetTimer = setTimeout(bounce, 200);
@@ -328,7 +328,7 @@ function initBouncingHint() {
 }
 
 function initSoundSystem() {
-  // 在用户首次点击任意位置时激活 Web Audio（需要用户手势）。
+  // 在首次点击任意位置时激活 Web Audio。
   // 欢迎遮罩覆盖全屏，因此首次点击必然是关闭遮罩。
   document.addEventListener('click', function activate() {
     if (soundActivated) return;
@@ -369,7 +369,7 @@ function setTheme(theme) {
     return;
   }
 
-  // 用户手动切换主题：写入 localStorage，清除自动检测标记
+  // 手动切换主题：写入 localStorage，清除自动检测标记
   localStorage.setItem('theme', theme);
   sessionStorage.removeItem('_themeAuto');
 
@@ -423,7 +423,7 @@ function setTheme(theme) {
   }, 500);
 }
 
-/* 内部：切换 data-theme + 更新 UI 状态（不含动画） */
+/* 内部：切换 data-theme + 更新 UI 状态 */
 function _applyThemeUI(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
@@ -476,7 +476,7 @@ function initThemeSwitcher() {
   // 移除 CSS 过渡 — 弹簧处理所有动画
   themePillEl.style.transition = 'none';
 
-  // 自动检测系统深色模式（仅在用户未手动设置过主题时）
+  // 自动检测系统深色模式（仅在未手动设置过主题时）
   let saved = localStorage.getItem('theme');
   if (!saved) {
     // 检测系统主题偏好（兼容 iOS：优先用 matchMedia，fallback 用 CSS 计算值）
@@ -1035,7 +1035,7 @@ function initNavLinks() {
         // 立即取消上一次的 timer，无论之前悬停在哪个按钮上
         if (_navHoverTimer) clearTimeout(_navHoverTimer);
 
-        // 0ms 直接切换，极致跟手
+        // 0ms 直接切换
         _navHoverTimer = setTimeout(() => {
           _navHoverTimer = null;
           switchPage(page);
@@ -1246,7 +1246,7 @@ function pillAnimateLoop() {
   p.vHover += fh; p.vHover *= phys.damping;
   p.hover += p.vHover;
 
-  // HoverW (width hover expand)
+  // HoverW
   let fhw = phys.stiffness * (p.targetHoverW - p.hoverW);
   p.vHoverW += fhw; p.vHoverW *= phys.damping;
   p.hoverW += p.vHoverW;
@@ -1340,7 +1340,7 @@ function initNavPill() {
     });
   });
 
-  // 字体异步加载完成后重新校准 pill（Google Fonts 可能导致初始高度为 0）
+  // 字体异步加载完成后重新校准 pill
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(function() {
       setTimeout(repositionNavPill, 50);
@@ -1487,7 +1487,7 @@ function initNavPill() {
   document.addEventListener('touchend', onDragEnd);
 }
 
-// 字体加载完成后重新校准 pill 位置（解决 Google Fonts 异步加载导致液态玻璃错位）
+// 字体加载完成后重新校准 pill 位置
 function repositionNavPill() {
   const navLinks = document.getElementById('navLinks');
   if (!navLinks || !navPill) return;
@@ -1505,8 +1505,6 @@ function repositionNavPill() {
   if (active) updatePill(active, true);
 }
 
-// updatePill is now spring-powered (see above)
-
 // ResizeObserver 监视 nav-links 尺寸变化（字体加载/内容回流时自动校准 pill）
 (function initPillResizeObserver() {
   var navLinks = document.getElementById('navLinks');
@@ -1517,7 +1515,7 @@ function repositionNavPill() {
   obs.observe(navLinks);
 })();
 
-// 烟花粒子系统
+// 烟花粒子
 function initFireworks() {
   let canvas = document.getElementById('fireworkCanvas');
   if (!canvas) {
@@ -1669,7 +1667,7 @@ function setupDragDrop() {
 }
 
 async function handleFile(file) {
-  // 200MB size limit
+  // 200MB限制
   if (file.size > 200 * 1024 * 1024) {
     showToast('文件大小超过200MB，请选择更小的图片', 'error');
     return;
@@ -1689,7 +1687,6 @@ async function handleFile(file) {
   resultBlob = null;
   resultFileName = null;
 
-  // Read raw file data synchronously (awaited) for reliable EXIF extraction later
   try {
     currentFileData = await file.arrayBuffer();
   } catch {
@@ -1704,7 +1701,6 @@ async function handleFile(file) {
     meta.classList.remove('hidden');
   }
 
-  // Fill EXIF camera params on the upload page immediately
   const exif = parseExifRobust(currentFileData);
   const setMeta = (id, val) => {
     const el = document.getElementById(id);
@@ -2110,7 +2106,7 @@ function toNumber(v) {
 function parseExifRobust(buffer) {
   if (!buffer) return {};
 
-  // 1. 用 exif.js 解析（业界标准 EXIF 解析器）
+  // 1. 用 exif.js 解析
   let exifJsResult = null;
   try {
     if (typeof EXIF !== 'undefined' && EXIF.readFromBinaryFile) {
@@ -2167,7 +2163,7 @@ function parseExif(buffer) {
   const view = new DataView(buffer);
   let offset = 0;
 
-  // Check SOI marker
+  // 检查 SOI marker
   if (data[0] !== 0xFF || data[1] !== 0xD8) return {};
 
   offset = 2;
@@ -2177,7 +2173,7 @@ function parseExif(buffer) {
 
     // APP1 marker
     if (marker === 0xE1) {
-      // Check Exif header
+      // 检查 Exif header
       const header = String.fromCharCode(...data.slice(offset + 4, offset + 10));
       if (header !== 'Exif\x00\x00') { offset += 2 + view.getUint16(offset + 2, false); continue; }
 
@@ -2195,13 +2191,11 @@ function parseExif(buffer) {
 
       var result = Object.assign({}, ifd0);
 
-      // Follow Exif SubIFD pointer (tag 0x8769) — most camera params live here
       if (ifd0._subIfdOffset) {
         const sub = readIFD(view, tiffOffset, tiffOffset + ifd0._subIfdOffset, isLE);
         result = Object.assign(result, sub);
       }
 
-      // Follow GPS IFD pointer (tag 0x8825) — GPS data lives here
       if (ifd0._gpsIfdOffset) {
         const gps = readIFD(view, tiffOffset, tiffOffset + ifd0._gpsIfdOffset, isLE);
         result = Object.assign(result, gps);
@@ -2210,7 +2204,6 @@ function parseExif(buffer) {
       return result;
     }
 
-    // Other markers: skip
     if (marker === 0x00 || marker === 0x01 || (marker >= 0xD0 && marker <= 0xD7)) {
       offset += 2;
     } else {
@@ -2829,7 +2822,6 @@ function showToast(msgOrKey, type) {
 
 // 鼠标倾斜效果（2D 位置跟随）
 // 使用 document 级事件委托，适用于所有元素，包括面板内部（画布、按钮等）
-
 const TILT_SELECTOR =
   '.feature-card, .bounce-card, ' +
   '.btn:not(.nav-ping-btn), ' +
@@ -2837,14 +2829,12 @@ const TILT_SELECTOR =
   '.btn-process:not(:disabled), ' +
   '.result-info-bar, .result-canvas-wrap, .save-block';
 
-let _tiltCurrent = null;   // element currently under tilt
+let _tiltCurrent = null;
 let _tiltLeaving = false;
 
 function _findTiltTarget(e) {
-  // Try e.target first (fast path)
   let el = e.target.closest(TILT_SELECTOR);
   if (!el) {
-    // Fallback: use elementsFromPoint to find the topmost element at cursor
     const hits = document.elementsFromPoint(e.clientX, e.clientY);
     for (let i = 0; i < hits.length; i++) {
       el = hits[i].closest(TILT_SELECTOR);
@@ -2853,7 +2843,6 @@ function _findTiltTarget(e) {
   }
   if (!el) return null;
   if (el.closest('.nav-links') || el.classList.contains('mode-tab')) return null;
-  // Only tilt elements whose page-section is active (visible)
   const section = el.closest('.page-section');
   if (section && !section.classList.contains('active')) return null;
   return el;
@@ -2894,8 +2883,6 @@ function _resetTilt(el) {
 }
 
 function initMouseTilt() {
-  // Kill any previous listeners (safe to call multiple times)
-  // We use document-level delegation, so just attach once.
   if (initMouseTilt._attached) return;
   initMouseTilt._attached = true;
 
@@ -2904,7 +2891,6 @@ function initMouseTilt() {
 
     if (el) {
       if (el !== _tiltCurrent) {
-        // Mouse entered a new tilt element
         if (_tiltCurrent) _resetTilt(_tiltCurrent);
         _tiltCurrent = el;
         _tiltLeaving = false;
@@ -2912,7 +2898,6 @@ function initMouseTilt() {
       }
       _applyTilt(el, e);
     } else {
-      // Mouse is not over any tilt element
       if (_tiltCurrent) {
         _resetTilt(_tiltCurrent);
         _tiltCurrent = null;
