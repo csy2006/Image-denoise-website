@@ -1,4 +1,4 @@
-/* ==================== 创意滤镜页面 ==================== */
+/* 创意滤镜页面 */
 /* 布局完全镜像 ticket.css —— 左侧面板 + 右侧预览 */
 
 /* 页面容器：紧贴导航栏，禁止滚动 */
@@ -6,7 +6,7 @@
   overflow: hidden !important;
 }
 
-/* ==================== 页面布局 ==================== */
+/* 页面布局 */
 /* .page-section 是 absolute; top: var(--navbar-h)，页面容器已从导航栏底部开始
    .filter-page 无需 padding-top（.page-section 已留好空间）
    min-height: 100% 填满 .page-section 的高度（= 100vh - navbar-h） */
@@ -16,7 +16,7 @@
   gap: 0;
 }
 
-/* ==================== 左侧面板 ==================== */
+/* 左侧面板 */
 .filter-panel {
   width: 420px;
   min-width: 420px;
@@ -45,7 +45,7 @@
   margin-bottom: 1.5rem;
 }
 
-/* ==================== 上传区域 ==================== */
+/* 上传区域 */
 .filter-upload-zone {
   border: 2px dashed var(--orange-border);
   border-radius: var(--radius-lg);
@@ -101,7 +101,7 @@
   margin: 0 auto;
 }
 
-/* ==================== 弹窗内预览 ==================== */
+/* 弹窗内预览 */
 .filter-sheet-preview {
   display: none;
   width: 100%;
@@ -129,7 +129,7 @@
   border-radius: var(--radius-sm);
 }
 
-/* ==================== 编辑器（滤镜选择区） ==================== */
+/* 编辑器（滤镜选择区） */
 .filter-editor {
   animation: fadeSlideIn 0.4s ease;
 }
@@ -149,7 +149,7 @@
   border-bottom: 1px solid var(--orange-border);
 }
 
-/* ==================== 滤镜类别切换 Tab（液态玻璃药丸） ==================== */
+/* 滤镜类别切换 Tab（液态玻璃药丸） */
 .filter-category-tabs {
   position: relative;
   display: flex;
@@ -272,7 +272,7 @@
   background: rgba(255,255,255,0.05) !important;
 }
 
-/* ==================== 滤镜类别标签（保留用于可能的旧引用） ==================== */
+/* 滤镜类别标签（保留用于可能的旧引用） */
 .filter-category-label {
   font-size: 0.78rem;
   font-weight: 500;
@@ -284,7 +284,7 @@
   padding-left: 0.15rem;
 }
 
-/* ==================== 滤镜预设：水平药丸排布 ==================== */
+/* 滤镜预设：水平药丸排布 */
 .filter-presets {
   display: flex;
   flex-wrap: wrap;
@@ -362,7 +362,7 @@
   background: rgba(255,255,255,0.85);
 }
 
-/* ==================== 编辑器操作按钮 ==================== */
+/* 编辑器操作按钮 */
 .filter-editor-actions {
   display: flex;
   gap: 0.75rem;
@@ -377,7 +377,7 @@
   border-radius: 50px !important;
 }
 
-/* ==================== 右侧预览区 ==================== */
+/* 右侧预览区 */
 .filter-preview-area {
   flex: 1;
   display: flex;
@@ -422,7 +422,7 @@
   display: block;
 }
 
-/* ==================== 滤镜详情标签（当前使用的滤镜名） ==================== */
+/* 滤镜详情标签（当前使用的滤镜名） */
 .filter-active-badge {
   display: inline-flex;
   align-items: center;
@@ -436,7 +436,7 @@
   margin-top: 0.75rem;
 }
 
-/* ==================== 上传区：页面内永远隐藏，仅在弹窗中显示 ==================== */
+/* 上传区：页面内永远隐藏，仅在弹窗中显示 */
 /* 所有设备：页面内（.filter-page 上下文中）彻底隐藏上传区 */
 .filter-page .filter-upload-zone,
 .filter-page #filterUploadZone {
@@ -476,7 +476,7 @@ body > .filter-panel .filter-upload-zone.upload-hidden {
   display: none !important;
 }
 
-/* ==================== 移动端底部弹窗面板 ==================== */
+/* 移动端底部弹窗面板 */
 /* 完全镜像 ticket-panel 的底部弹窗写法（style.css 中已验证可用） */
 /* 面板移到 body 下时，通过 .sheet-open 控制显示 */
 body > .filter-panel {
@@ -535,7 +535,7 @@ body > .filter-panel.sheet-expanded {
   overflow-y: auto !important;
 }
 
-/* ==================== 移动端遮罩：铺满整屏 ==================== */
+/* 移动端遮罩：铺满整屏 */
 body > .filter-mobile-backdrop {
   position: fixed !important;
   inset: 0 !important;
@@ -550,13 +550,13 @@ body > .filter-mobile-backdrop.show {
   pointer-events: auto !important;
 }
 
-/* ==================== 移动端浮动切换按钮 ==================== */
+/* 移动端浮动切换按钮 */
 /* 和 .ticket-mobile-toggle 保持同一套标准，桌面端隐藏，移动端显示 */
 .filter-mobile-toggle {
   display: none;
 }
 
-/* ==================== sheet-top-bar（拖拽手柄） ==================== */
+/* sheet-top-bar（拖拽手柄） */
 /* 默认隐藏：非弹窗模式（桌面左右栏 + 移动端普通流）不显示 */
 /* 只隐藏滤镜面板内的手柄，不影响票根面板 */
 .filter-panel .sheet-top-bar {
@@ -668,7 +668,7 @@ body > .filter-mobile-backdrop.show {
    半屏（.sheet-open:not(.sheet-expanded)）→ arrow-up 朝上
    全屏（.sheet-expanded）→ arrow-down 朝下 */
 
-/* ==================== 移动端适配 ==================== */
+/* 移动端适配 */
 @media (max-width: 900px) {
   .filter-page {
     flex-direction: column;
@@ -690,7 +690,7 @@ body > .filter-mobile-backdrop.show {
     padding: 1.5rem;
   }
 
-  /* ── 分类Tab：3个Tab均分，字体缩小防截断 ── */
+  /* 分类Tab：3个Tab均分，字体缩小防截断 */
   .filter-category-tabs {
     gap: 0;
     margin-bottom: 0.7rem;
@@ -711,7 +711,7 @@ body > .filter-mobile-backdrop.show {
     min-height: 30px;
   }
 
-  /* ── 预设按钮：缩小适配 ── */
+  /* 预设按钮：缩小适配 */
   .filter-presets {
     gap: 0.4rem;
   }
@@ -782,7 +782,7 @@ body > .filter-mobile-backdrop.show {
   }
 }
 
-/* ==================== 横屏适配 ==================== */
+/* 横屏适配 */
 @media (max-height: 500px) and (orientation: landscape) {
   .filter-page {
     flex-direction: row;
