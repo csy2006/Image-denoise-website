@@ -34,7 +34,7 @@ var i18n = (function () {
     navTicket:           { zh: '旅行票根',       en: 'Ticket' },
     navFilter:           { zh: '创意滤镜',       en: 'Filters' },
     navProfile:          { zh: '设置中心',       en: 'Profile' },
-    navPalette:          { zh: '调色盘',         en: 'Palette' },
+    navPalette:          { zh: '色卡',         en: 'Colorswatch' },
     statusConnecting:    { zh: '等待后端连接...', en: 'Connecting...' },
     statusConnected:     { zh: '后端已连接',     en: 'Connected' },
     statusError:         { zh: '连接失败',       en: 'Connection failed' },
