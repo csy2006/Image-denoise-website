@@ -1,16 +1,16 @@
 /**
- * IMAGE DENOISE — Frontend Main Script (SPA)
- * Connects to C++ backend via HTTP API
- * Supports: PNG, JPG, JPEG, RAW, BMP, TIFF, WebP
+ * IMAGE DENOISE — 前端主脚本（SPA）
+ * 通过 HTTP API 连接 C++ 后端
+ * 支持格式：PNG, JPG, JPEG, RAW, BMP, TIFF, WebP
  */
 
-// ── 本地处理模式（无需后端服务器）──
+// 本地处理模式（无需后端服务器）
 // 使用 Blob URL 创建 Worker，兼容 file:// 协议
 let _denoiseWorker = null;
 let _denoiseWorkerBlobURL = null;
 let _denoiseMsgId = 0;
 
-// ── 移动端震动反馈工具 ──
+// 移动端震动反馈工具
 // 只在触屏设备上触发，桌面端静默跳过
 var _vibrateEnabled = true;
 try {
@@ -162,7 +162,7 @@ function getDenoiseWorker() {
   return _denoiseWorker;
 }
 
-// State
+// 状态
 let currentFile = null;
 let currentFileData = null;
 let resultBlob = null;
@@ -173,14 +173,12 @@ let currentPage = 'home';
 let _currentSaveFormat = 'png';
 let _currentSaveAction = 'save';
 
-
-// Sound
+// 音效
 let audioCtx = null;
 let soundEnabled = true;
 let soundActivated = false;
 
-
-// ======================= Sound =======================
+// 音效相关
 function getAudioContext() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -228,8 +226,7 @@ function toggleSound() {
   }
 }
 
-// ======================= Bouncing Welcome Hint =======================
-
+// 欢迎页弹性提示
 const HINT_PHYSICS = { stiffness: 0.16, damping: 0.72, trailStiffness: 0.08, trailDamping: 0.84 };
 let hintBounceRAF = null;
 let hintTargetTimer = null;
@@ -239,7 +236,7 @@ function initBouncingHint() {
   const overlay = document.getElementById('welcomeOverlay');
   if (!hint || !overlay) return;
 
-  // ---- Create trail clones (visual blur only, no text) ----
+  // 创建拖影克隆（仅视觉模糊，无文字）
   const trails = [];
   const TH = hint.offsetWidth;
   const TV = hint.offsetHeight;
@@ -252,9 +249,9 @@ function initBouncingHint() {
     trails.push(trail);
   }
 
-  // ---- Spring state for main hint ----
+  // 主提示的弹簧状态
   const spring = { x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0 };
-  // ---- Spring state for each trail ----
+  // 每个拖影的弹簧状态
   const trailSprings = trails.map(() => ({ x: 0, y: 0, vx: 0, vy: 0 }));
 
   function randTarget() {
@@ -267,14 +264,14 @@ function initBouncingHint() {
     };
   }
 
-  // Initial position: center
+  // 初始位置：居中
   spring.tx = (window.innerWidth - TH) / 2;
   spring.ty = (window.innerHeight - TV) / 2;
   spring.x = spring.tx;
   spring.y = spring.ty;
   trailSprings.forEach(s => { s.x = spring.x; s.y = spring.y; });
 
-  // Apply initial position
+  // 应用初始位置
   hint.style.left = spring.x + 'px';
   hint.style.top = spring.y + 'px';
 
@@ -288,16 +285,16 @@ function initBouncingHint() {
   }
 
   function loop() {
-    // Main hint spring toward target
+    // 主提示朝向目标
     applySpring(spring, spring.tx, spring.ty, HINT_PHYSICS.stiffness, HINT_PHYSICS.damping);
 
-    // Trail springs chase the hint with delay
+    // 拖影追随主提示，带有延迟
     for (let i = 0; i < trailSprings.length; i++) {
       const ts = trailSprings[i];
       applySpring(ts, spring.x, spring.y, HINT_PHYSICS.trailStiffness, HINT_PHYSICS.trailDamping);
     }
 
-    // Apply positions
+    // 应用位置
     hint.style.left = spring.x + 'px';
     hint.style.top = spring.y + 'px';
 
@@ -309,20 +306,20 @@ function initBouncingHint() {
     hintBounceRAF = requestAnimationFrame(loop);
   }
 
-  // Start animation
+  // 启动动画
   hintBounceRAF = requestAnimationFrame(loop);
 
-  // Randomly change target
+  // 随机改变目标位置
   function bounce() {
     const t = randTarget();
     spring.tx = t.x;
     spring.ty = t.y;
-    // Schedule next bounce: 500-800ms (faster pace)
+    // 安排下一次弹跳：500-800ms（更快节奏）
     hintTargetTimer = setTimeout(bounce, 500 + Math.random() * 300);
   }
   hintTargetTimer = setTimeout(bounce, 200);
 
-  // Cleanup function
+  // 清理函数
   return () => {
     if (hintBounceRAF) cancelAnimationFrame(hintBounceRAF);
     if (hintTargetTimer) clearTimeout(hintTargetTimer);
@@ -362,7 +359,8 @@ function initSoundSystem() {
     } catch(e){}
   }, { once: true, capture: true });
 }
-// ======================= Theme Switcher =======================
+
+// 主题切换器
 function setTheme(theme) {
   var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
   if (theme === currentTheme) {
@@ -450,11 +448,11 @@ function initThemeSwitcher() {
   const switcher = document.getElementById('themeSwitcher');
   if (!switcher) return;
 
-  // Get theme pill element
+  // 获取主题指示条元素
   themePillEl = switcher.querySelector('.theme-pill');
   if (!themePillEl) return;
 
-  // Measure theme switcher dimensions
+  // 测量主题切换器尺寸
   _themeSwitcherHeight = (parseFloat(getComputedStyle(switcher).height) || 0) - _themeSwitcherPad * 2;
   // 兜底：移动端字体未加载时 computed height 可能为 0
   if (!_themeSwitcherHeight || _themeSwitcherHeight < 10) _themeSwitcherHeight = 30;
@@ -475,7 +473,7 @@ function initThemeSwitcher() {
     window._themeSwitcherObserver.observe(switcher);
   }
 
-  // Remove CSS transitions — spring handles all animation
+  // 移除 CSS 过渡 — 弹簧处理所有动画
   themePillEl.style.transition = 'none';
 
   // 自动检测系统深色模式（仅在用户未手动设置过主题时）
@@ -509,7 +507,7 @@ function initThemeSwitcher() {
     sessionStorage.removeItem('_themeAuto');
   }
 
-  // Compute initial position first, then set spring state before theme activates
+  // 先计算初始位置，然后设置弹簧状态，再激活主题
   const preTarget = switcher.querySelector('[data-theme-option="' + saved + '"]');
   if (preTarget) {
     const sr = switcher.getBoundingClientRect();
@@ -520,7 +518,7 @@ function initThemeSwitcher() {
     themePillSpring.targetW = themePillSpring.w;
   }
 
-  // Now activate theme (spring starts from correct position, no visual jump)
+  // 现在激活主题（弹簧从正确位置开始，无视觉跳变）
   // 初始加载直接设置，不播放扫幕动画
   // 如果是自动检测的系统主题：不设置 data-theme（让 CSS @media 自行决定，兼容 iOS）
   // 如果用户手动设置过：设置 data-theme 覆盖 CSS 默认值
@@ -574,7 +572,7 @@ function initThemeSwitcher() {
   try { window._themeMediaQuery.addEventListener('change', window._themeChangeHandler); } catch(e){}
   try { window._themeMediaQuery.addListener(window._themeChangeHandler); } catch(e){}
 
-  // Hover effects: spring-driven magnification
+  // Hover 效果：弹簧驱动的放大
   var options = switcher.querySelectorAll('.theme-option');
   var _hoveredOption = null;
 
@@ -585,7 +583,7 @@ function initThemeSwitcher() {
     });
     opt.addEventListener('mouseleave', () => {
       _hoveredOption = null;
-      // Return to current active option
+      // 恢复到当前激活选项
       const activeOpt = switcher.querySelector('.theme-option.active');
       if (activeOpt) {
         updateThemePill(activeOpt, false);
@@ -593,7 +591,7 @@ function initThemeSwitcher() {
     });
   });
 
-  // Click: switch theme with spring animation
+  // 点击：切换主题，使用弹簧动画
   options.forEach(opt => {
     opt.addEventListener('click', () => {
       const theme = opt.getAttribute('data-theme-option');
@@ -620,8 +618,8 @@ function initThemeSwitcher() {
     }, 500);
   }
 }
-// ======================= Init =======================
 
+// 初始化
 // 动态测量导航栏高度，设置 CSS 变量，让所有页面自动适配
 function syncNavbarHeight() {
   const navbar = document.getElementById('navbar');
@@ -651,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initThemeSwitcher();
   initSavePills();
 
-  // ─── 移动端：按需把面板和遮罩移到 body 下 ──
+  // 移动端：按需把面板和遮罩移到 body 下
   // 桌面端（>768px）：面板留在原页面内，保持 flex 布局
   // 移动端（≤768px）：面板移到 body 下，用 position:fixed 实现底部弹窗
   var _panelsInBody = false;
@@ -716,7 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 200);
   });
 
-  // ─── 移动端弹窗按钮绑定（极简方案：只用 click）───
+  // 移动端弹窗按钮绑定（极简方案：只用 click）
   function bindMobileBtn(id, fnName) {
     var el = document.getElementById(id);
     if (!el) return;
@@ -760,8 +758,7 @@ window.addEventListener('load', function() {
   if (window._movePanelsToBodyIfMobile) window._movePanelsToBodyIfMobile();
 });
 
-// ======================= Page Switching (SPA) =======================
-
+// 页面切换 (SPA)
 const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter', 'palette', 'profile'];
 
 let _switchTimer = null;
@@ -1077,8 +1074,7 @@ function initNavLinks() {
   }
 }
 
-// ======================= Theme Pill Physics =======================
-
+// 主题指示条物理弹簧
 const THEME_PILL_PHYSICS = {
   stiffness: 0.12,
   damping: 0.78,
@@ -1169,7 +1165,7 @@ function updateThemePill(targetEl, hover) {
   startThemePillAnimation();
 }
 
-// ======================= Nav Pill Physics (Spring) =======================
+// 导航指示条物理弹簧
 const PILL_PHYSICS = {
   stiffness: 0.10,    // 弹簧刚度（越大越快追上目标）
   damping: 0.80,      // 阻尼（越大越快停下来）
@@ -1307,9 +1303,8 @@ function updatePill(target, instant) {
   }
   startPillAnimation();
 }
-// ======================= Nav Pill (Liquid Glass Sliding) =======================
 
-
+// 导航指示条 (液态玻璃滑动)
 let navPill = null;
 
 function initNavPill() {
@@ -1414,7 +1409,7 @@ function initNavPill() {
     if (active) updatePill(active);
   });
 
-  // ─── Nav Links Drag-to-Switch ───
+  // 导航链接拖拽切换
   // 支持鼠标拖动 + 触摸拖动来切换页面
   let _navDrag = {
     dragging: false,
@@ -1512,7 +1507,7 @@ function repositionNavPill() {
 
 // updatePill is now spring-powered (see above)
 
-// ── ResizeObserver 监视 nav-links 尺寸变化（字体加载/内容回流时自动校准 pill）──
+// ResizeObserver 监视 nav-links 尺寸变化（字体加载/内容回流时自动校准 pill）
 (function initPillResizeObserver() {
   var navLinks = document.getElementById('navLinks');
   if (!navLinks || !window.ResizeObserver) return;
@@ -1522,8 +1517,7 @@ function repositionNavPill() {
   obs.observe(navLinks);
 })();
 
-// ======================= Firework Particle System =======================
-
+// 烟花粒子系统
 function initFireworks() {
   let canvas = document.getElementById('fireworkCanvas');
   if (!canvas) {
@@ -1626,8 +1620,7 @@ function initFireworks() {
   });
 }
 
-// ======================= Backend Ping (本地处理模式) =======================
-
+// 后端 Ping（本地处理模式）
 function pingBackend() {
   const dot = document.getElementById('statusDot');
   const text = document.getElementById('statusText');
@@ -1637,8 +1630,7 @@ function pingBackend() {
   text.textContent = 'Young__Yang降噪程序就绪';
 }
 
-// ======================= File Input =======================
-
+// 文件输入
 function setupFileInput() {
   const input = document.getElementById('fileInput');
   const zone = document.getElementById('uploadZone');
@@ -1840,8 +1832,7 @@ function drawToCanvas(canvas, img) {
   ctx.drawImage(img, 0, 0, w, h);
 }
 
-// ======================= Mode Selection =======================
-
+// 模式选择
 function setupModePill() {
   const pill = document.getElementById('modePill');
   const tabs = document.querySelectorAll('.mode-tab');
@@ -1887,8 +1878,7 @@ function selectMode(btn) {
   }
 }
 
-// ======================= Format Tabs =======================
-
+// 格式标签
 function setupFormatTabs() {
   document.querySelectorAll('.fmt-tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1901,8 +1891,7 @@ function setupFormatTabs() {
   });
 }
 
-// ======================= Process Image =======================
-
+// 处理图像
 async function processImage() {
   if (!currentFile) return;
   vibrate(10);
@@ -1948,7 +1937,7 @@ async function processImage() {
     outCanvas.height = dh;
     const outCtx = outCanvas.getContext('2d');
 
-    // ---- 分块降噪参数 ----
+    // 分块降噪参数
     const TILE = 1800;        // 每块最大尺寸（留 248px 给重叠）
     const OVERLAP = 32;       // 相邻块重叠像素，消除拼接缝
     const tilesX = Math.ceil(dw / TILE);
@@ -1963,14 +1952,14 @@ async function processImage() {
 
     for (let ty = 0; ty < tilesY; ty++) {
       for (let tx = 0; tx < tilesX; tx++) {
-        // --- 从源图提取当前 tile（含重叠） ---
+        // 从源图提取当前 tile（含重叠）
         const sx = Math.max(0, tx * TILE - OVERLAP);
         const sy = Math.max(0, ty * TILE - OVERLAP);
         const sw = Math.min(TILE + 2 * OVERLAP, dw - sx);
         const sh = Math.min(TILE + 2 * OVERLAP, dh - sy);
         const tileData = srcCtx.getImageData(sx, sy, sw, sh);
 
-        // --- 送 worker 降噪 ---
+        // 送 worker 降噪
         const msgId = ++_denoiseMsgId;
         const worker = getDenoiseWorker();
 
@@ -1995,7 +1984,7 @@ async function processImage() {
           }, [buffer]);
         });
 
-        // --- 将有效区域（去除重叠）写回输出 canvas ---
+        // 将有效区域（去除重叠）写回输出 canvas
         const ex = tx * TILE;                    // 输出 canvas 上的 x
         const ey = ty * TILE;                    // 输出 canvas 上的 y
         const ew = Math.min(TILE, dw - ex);      // 有效宽度
@@ -2012,7 +2001,7 @@ async function processImage() {
         }
         outCtx.putImageData(outData, ex, ey);
 
-        // --- 进度更新 ---
+        // 进度更新
         const done = ty * tilesX + tx + 1;
         const pct = Math.round((done / totalTiles) * 100);
         if (progressBar) progressBar.style.width = pct + '%';
@@ -2097,8 +2086,7 @@ function animateProgress(bar, text) {
   return () => { clearInterval(iv); };
 }
 
-// ======================= EXIF Parser (robust, uses exif.js + fallback) =======================
-
+// EXIF 解析器（稳健，使用 exif.js + 后备）
 /**
  * 使用 exif.js 库（已加载在页面上）作为主要解析器，覆盖更多相机厂商的 EXIF 格式。
  * exif.js 返回的 ExposureTime/FNumber/FocalLength 是 Rational 对象 {numerator, denominator}，
@@ -2334,36 +2322,35 @@ function colorSpaceName(code) {
   return null;
 }
 
-// ======================= Fill Photo Info =======================
-
+// 填充照片信息
 async function fillPhotoInfo() {
   const set = (id, val) => {
     const el = document.getElementById(id);
     if (el) el.textContent = val || '--';
   };
 
-  // ---- File info (always available) ----
+  // 文件信息（总是可用）
   if (currentFile) {
     const sizeStr = formatBytes(currentFile.size);
     const ext = currentFile.name.split('.').pop().toUpperCase();
-    // Result page IDs
+    // 结果页 ID
     set('infoFileSize', sizeStr);
     set('infoFormat', ext);
-    // Upload page IDs (metaBytes / metaFormat already set in handleFile)
+    // 上传页 ID (metaBytes / metaFormat 已在 handleFile 中设置)
   } else {
     set('infoFileSize', '--');
     set('infoFormat', '--');
   }
 
-  // ---- Camera params from EXIF ----
-  // Ensure raw file data is available (fallback read if needed)
+  // 从 EXIF 读取相机参数
+  // 确保原始文件数据可用（必要时读取后备）
   if (!currentFileData && currentFile) {
     try { currentFileData = await currentFile.arrayBuffer(); } catch { currentFileData = null; }
   }
 
   const exif = parseExifRobust(currentFileData);
 
-  // Helper: fill BOTH upload page (meta*) and result page (info*) IDs
+  // 辅助函数：同时填充上传页 (meta*) 和结果页 (info*) ID
   const setPair = (metaId, infoId, val) => {
     set(metaId, val);
     set(infoId, val);
@@ -2378,8 +2365,7 @@ async function fillPhotoInfo() {
   set('infoColorSpace', colorSpaceName(exif.colorSpace) || '--');
 }
 
-// ======================= Result Page Refresh =======================
-
+// 结果页刷新
 function refreshResultPage() {
   if (!resultBlob) {
     const emptyState = document.getElementById('emptyState');
@@ -2394,11 +2380,11 @@ function refreshResultPage() {
   if (emptyState) emptyState.classList.add('hidden');
   if (resultContent) {
     resultContent.classList.remove('hidden');
-    // Force reflow so mouse-tracking works immediately
+    // 强制 reflow 使鼠标跟踪立即生效
     void resultContent.offsetHeight;
   }
 
-  // Re-init save pills after result content becomes visible
+  // 结果内容可见后重新初始化保存药丸
   requestAnimationFrame(() => { requestAnimationFrame(() => initSavePills()); });
 
   const p = window._lastDenoiseParams || {};
@@ -2411,7 +2397,7 @@ function refreshResultPage() {
   const rm = document.getElementById('resultMode');
   if (rm) rm.textContent = p.mode === 'bilateral' ? '彩色双边' : '灰度 Y 通道';
 
-  // Fill photo info section
+  // 填充照片信息部分
   fillPhotoInfo();
 
   // 用降噪后的实际文件大小覆盖原始文件大小的显示
@@ -2435,8 +2421,7 @@ function refreshResultPage() {
   img.src = url;
 }
 
-// ======================= Save Image =======================
-
+// 保存图像
 async function saveImage(fmtOverride) {
   if (!resultBlob) { showToast(i18n.t('toastNoResult'), 'error'); return; }
 
@@ -2489,17 +2474,16 @@ async function convertBlob(blob, fmt, quality) {
   });
 }
 
-// ======================= SPA Save UI (format pills + action pills) =======================
-
+// SPA 保存 UI（格式药丸 + 动作药丸）
 function selectSaveFormat(btn) {
   vibrate(6);
   _currentSaveFormat = btn.dataset.fmt;
 
-  // Update active state
+  // 更新激活状态
   document.querySelectorAll('.save-fmt-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  // Move format pill
+  // 移动格式药丸
   const container = document.getElementById('saveFormatTabs');
   if (container) {
     const pill = container.querySelector('.save-format-pill');
@@ -2511,7 +2495,7 @@ function selectSaveFormat(btn) {
     }
   }
 
-  // Show/hide quality slider
+  // 显示/隐藏质量滑块
   const qualityRow = document.getElementById('qualityRow');
   if (qualityRow) {
     qualityRow.style.display = (_currentSaveFormat === 'png') ? 'none' : 'flex';
@@ -2522,11 +2506,11 @@ function selectSaveAction(btn) {
   vibrate(6);
   _currentSaveAction = btn.dataset.action;
 
-  // Update active state
+  // 更新激活状态
   document.querySelectorAll('.save-action-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  // Move action pill
+  // 移动动作药丸
   const container = document.getElementById('saveActions');
   if (container) {
     const pill = container.querySelector('.save-action-pill');
@@ -2548,7 +2532,7 @@ function executeSaveAction() {
 }
 
 function initSavePills() {
-  // Init format pill position + click listeners
+  // 初始化格式药丸位置 + 点击监听
   const formatContainer = document.getElementById('saveFormatTabs');
   if (formatContainer) {
     const activeFmt = formatContainer.querySelector('.save-fmt-btn.active');
@@ -2559,13 +2543,13 @@ function initSavePills() {
       pill.style.left = (br.left - cr.left) + 'px';
       pill.style.width = br.width + 'px';
     }
-    // Also support click (not just hover) on format buttons
+    // 也支持点击（不仅仅是悬停）格式按钮
     formatContainer.querySelectorAll('.save-fmt-btn').forEach(btn => {
       btn.addEventListener('click', () => selectSaveFormat(btn));
     });
   }
 
-  // Init action pill position + click listeners
+  // 初始化动作药丸位置 + 点击监听
   const actionContainer = document.getElementById('saveActions');
   if (actionContainer) {
     const firstAction = actionContainer.querySelector('.save-action-btn');
@@ -2576,15 +2560,14 @@ function initSavePills() {
       pill.style.left = (br.left - cr.left) + 'px';
       pill.style.width = br.width + 'px';
     }
-    // Also support click (not just hover) on action buttons
+    // 也支持点击（不仅仅是悬停）动作按钮
     actionContainer.querySelectorAll('.save-action-btn').forEach(btn => {
       btn.addEventListener('click', () => selectSaveAction(btn));
     });
   }
 }
 
-// ======================= Custom Sliders (hover-drag + liquid glass thumb) =======================
-
+// 自定义滑块（悬停拖拽 + 液态玻璃旋钮）
 let _customSliders = [];
 
 function initCustomSliders() {
@@ -2597,7 +2580,7 @@ function initCustomSliders() {
     const max = parseFloat(native.max) || 100;
     let val = parseFloat(native.value) || 0;
 
-    // Build custom slider DOM
+    // 构建自定义滑块 DOM
     const wrap = document.createElement('div');
     wrap.className = 'custom-slider';
     wrap.dataset.targetId = native.id;
@@ -2615,7 +2598,7 @@ function initCustomSliders() {
     track.appendChild(thumb);
     wrap.appendChild(track);
 
-    // Insert after native, then hide native
+    // 插入到 native 后，隐藏 native
     native.style.display = 'none';
     native.insertAdjacentElement('afterend', wrap);
 
@@ -2727,8 +2710,7 @@ function initCustomSliders() {
   });
 }
 
-// ======================= Compare Slider =======================
-
+// 对比滑块
 let compareActive = false;
 
 function setupCompareImages() {
@@ -2806,8 +2788,7 @@ function setupCompareSlider() {
   }
 }
 
-// ======================= Utils =======================
-
+// 工具函数
 function formatBytes(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -2846,9 +2827,8 @@ function showToast(msgOrKey, type) {
   toastTimer = setTimeout(() => { toast.className = 'toast hidden'; }, 2800);
 }
 
-// ======================= Mouse Tilt (2D position follow) =======================
-// Uses document-level event delegation so it works for all elements,
-// including children of panels (canvas, buttons, etc.)
+// 鼠标倾斜效果（2D 位置跟随）
+// 使用 document 级事件委托，适用于所有元素，包括面板内部（画布、按钮等）
 
 const TILT_SELECTOR =
   '.feature-card, .bounce-card, ' +
@@ -2957,7 +2937,8 @@ function resetAllTilt() {
     _tiltCurrent = null;
   }
 }
-/* ==================== 旅行票根生成器 ==================== */
+
+/* 旅行票根生成器 */
 (function() {
   'use strict';
 
@@ -2981,7 +2962,7 @@ function resetAllTilt() {
   /* 微信环境检测（IIFE 作用域，供下载函数等复用） */
   var _tkIsWeChat = /MicroMessenger/i.test(navigator.userAgent);
 
-  /* —— EXIF GPS 转十进制 —— */
+  /* EXIF GPS 转十进制 */
   function _tkGpsToDecimal(gpsArr, ref) {
     if (!gpsArr || !gpsArr.length) return null;
     var d = toNumber(gpsArr[0]) || 0;
@@ -2992,7 +2973,7 @@ function resetAllTilt() {
     return decimal;
   }
 
-  /* —— 拼音音节拆分（贪心最长匹配）—— */
+  /* 拼音音节拆分（贪心最长匹配） */
   /* 将 "sichuan" → "si chuan"，用于英文目的地格式化 */
   var _tkPinyinSyllables = ('a ai an ang ao ba bai ban bang bao bei ben beng bi bian biao bie bin bing bo bu ' +
     'ca cai can cang cao ce cen ceng cha chai chan chang chao che chen cheng chi chong chou chu chua chuai ' +
@@ -3037,7 +3018,7 @@ function resetAllTilt() {
     return out.join(' ').toUpperCase();
   }
 
-  /* —— 逆地理编码：GPS 坐标 → 城市/国家 —— */
+  /* 逆地理编码：GPS 坐标 → 城市/国家 */
   /* 使用 BigDataCloud 免费 API（CORS 友好、中国可访问、无需密钥） */
   function _tkReverseGeocode(lat, lon, cb) {
     var done = 0, result = { enCity: null, cnCountry: null, cnCity: null };
@@ -3079,7 +3060,7 @@ function resetAllTilt() {
     });
   }
 
-  /* —— 从 EXIF 提取日期 → "YYYY · M" 格式 —— */
+  /* 从 EXIF 提取日期 → "YYYY · M" 格式 */
   function _tkFormatExifDate(str) {
     if (!str) return null;
     // EXIF 格式: "2024:07:15 14:30:00" 或 "2024-07-15 14:30:00"
@@ -3091,7 +3072,7 @@ function resetAllTilt() {
     return year + ' · ' + month;
   }
 
-  /* —— 从文件提取 EXIF 信息并自动填充目的地 + 日期 —— */
+  /* 从文件提取 EXIF 信息并自动填充目的地 + 日期 */
   function _tkFillLocationFromExif(file) {
     var reader = new FileReader();
     reader.onload = function(ev) {
@@ -3099,14 +3080,14 @@ function resetAllTilt() {
         var exif = parseExifRobust(ev.target.result);
         console.log('[ticket] EXIF:', exif);
 
-        // —— 日期 ——
+        // 日期
         var dateStr = _tkFormatExifDate(exif.dateTimeOriginal);
         if (dateStr && inputDate) {
           inputDate.value = dateStr;
           console.log('[ticket] 日期已填充:', dateStr);
         }
 
-        // —— GPS 位置 ——
+        // GPS 位置
         var lat = _tkGpsToDecimal(exif.gpsLatitude, exif.gpsLatitudeRef);
         var lon = _tkGpsToDecimal(exif.gpsLongitude, exif.gpsLongitudeRef);
         if (lat === null || lon === null) {
@@ -3311,7 +3292,7 @@ function resetAllTilt() {
     }, 200);
   }
 
-  /* ── 微信 / iOS 键盘收起后页面缩放不还原修复 ── */
+  /* 微信 / iOS 键盘收起后页面缩放不还原修复 */
   /* 微信内置浏览器（iOS WKWebView / Android X5）对 viewport 的处理各有差异，
      需要多种手段组合出击才能覆盖全部场景 */
   var _tkLastInputBlur = 0;      // 记录最后 blur 时间
@@ -3450,7 +3431,7 @@ function resetAllTilt() {
   };
 
   // 下载：离屏克隆(960×400 固定尺寸)，显式设置所有字号(px)确保与参考图一致
-  /* ── 微信环境：长按保存图片（微信禁止 a.click() 下载）── */
+  /* 微信环境：长按保存图片（微信禁止 a.click() 下载） */
   function _tkWechatSaveImage(canvas) {
     // 移除旧遮罩（如果存在）
     var old = document.getElementById('wechat-save-overlay');
@@ -3502,13 +3483,13 @@ function resetAllTilt() {
     // clone 自身填满 wrapper，不设固定 px（由外层 wrapper 控制尺寸）
     clone.style.cssText = 'width:100%;height:100%;padding:0;margin:0;display:flex;flex-direction:row;overflow:hidden;background:transparent;border-radius:0;box-shadow:none;';
 
-    // ── 外层 wrapper：强制 960×400 输出尺寸，裁剪一切溢出 ──
+    // 外层 wrapper：强制 960×400 输出尺寸，裁剪一切溢出
     var wrapper = document.createElement('div');
     wrapper.id = 'tk-render-wrapper';
     wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:960px;height:400px;overflow:hidden;background:#fff;z-index:-1;';
     wrapper.appendChild(clone);
 
-    // ── photo 区域（左 71.43%）──
+    // photo 区域（左 71.43%）
     var photo = clone.querySelector('.ticket-photo');
     if (photo) {
       photo.style.cssText = 'position:static;width:71.43%;height:400px;border-radius:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#1a1a1a;';
@@ -3516,7 +3497,7 @@ function resetAllTilt() {
       if (pImg) { pImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;'; }
     }
 
-    // ── info 区域（右 28.57%）—— 显式设置每个子元素的 px 字号，匹配参考图 @ 960px 宽度 ──
+    // info 区域（右 28.57%）—— 显式设置每个子元素的 px 字号，匹配参考图 @ 960px 宽度
     var info = clone.querySelector('.ticket-info');
     if (info) {
       // 保留下行内背景色
@@ -3591,7 +3572,7 @@ function resetAllTilt() {
     regenerateTicketCode();
   };
 
-  // ── 移动端弹窗打开/关闭时控制状态栏 + 导航栏 ──
+  // 移动端弹窗打开/关闭时控制状态栏 + 导航栏
   function lockBodyForSheet() {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
@@ -3613,7 +3594,7 @@ function resetAllTilt() {
     if (navbar) navbar.classList.remove('sheet-visible');
   }
 
-  // ── 弹窗拖拽展开/收起 ──
+  // 弹窗拖拽展开/收起
   var _sheetDragData = null;
   function initSheetDrag(panelId, backdropId, toggleId, pageClass) {
     var panel = document.getElementById(panelId);
@@ -3789,4 +3770,3 @@ function resetAllTilt() {
   });
 
 })();
-
