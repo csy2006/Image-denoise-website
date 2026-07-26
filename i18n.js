@@ -38,7 +38,7 @@ var i18n = (function () {
     statusConnecting:    { zh: '等待后端连接...', en: 'Connecting...' },
     statusConnected:     { zh: '后端已连接',     en: 'Connected' },
     statusError:         { zh: '连接失败',       en: 'Connection failed' },
-    brandTag:            { zh: ' · 棱镜降噪',   en: ' · PrismDen' },
+    // brandTag:            { zh: '棱镜降噪',   en: ' · PrismDen' },
 
     /* 首页 */
     heroKanji:         { zh: 'Image Processing · Young__Yang', en: 'Image Processing · Young__Yang' },
