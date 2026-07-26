@@ -1,4 +1,4 @@
-/* ==================== i18n 多语言系统 ==================== */
+/* i18n 多语言系统 */
 /**
  * i18n.js — PrismDen 中英双语切换
  * 使用方式：
@@ -244,14 +244,14 @@ var i18n = (function () {
   };
 
 
-  /* —— 获取翻译文本 —— */
+  /* 获取翻译文本 */
   function t(key) {
     var entry = dict[key];
     if (!entry) return key;
     return entry[currentLang] || entry.zh || key;
   }
 
-  /* —— 应用语言到 DOM —— */
+  /* 应用语言到 DOM */
   function applyLang(lang) {
     currentLang = lang;
 
@@ -353,14 +353,14 @@ var i18n = (function () {
     }
   }
 
-  /* —— 切换语言并持久化 —— */
+  /* 切换语言并持久化 */
   function setLang(lang) {
     if (lang !== 'zh' && lang !== 'en') return;
     try { localStorage.setItem('prismden_lang', lang); } catch (e) {}
     applyLang(lang);
   }
 
-  /* —— 初始化：读取偏好并应用 —— */
+  /* 初始化：读取偏好并应用 */
   function init() {
     var saved = 'zh';
     try { saved = localStorage.getItem('prismden_lang') || 'zh'; } catch (e) {}
