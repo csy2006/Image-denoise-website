@@ -112,7 +112,7 @@
     
     # Python 静态服务器
     python -m http.server 8080
-    # 浏览器访问 http://localhost:8080
+    # 浏览器访问 https://csy2006.github.io/Image-denoise-website
 
 或使用任意静态托管服务（如 GitHub Pages、Cloud Studio）部署 `frontend/` 目录。
 
