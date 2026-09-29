@@ -862,7 +862,7 @@ window.addEventListener('load', function() {
 });
 
 // 页面切换 (SPA)
-const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter', 'palette', 'profile', 'batch', 'editor', 'history', 'archive'];
+const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter', 'palette', 'batch', 'editor', 'history', 'archive', 'profile'];
 
 let _switchTimer = null;
 let _prevSection = null;
