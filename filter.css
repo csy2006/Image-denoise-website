@@ -476,6 +476,38 @@ body > .filter-panel .filter-upload-zone.upload-hidden {
   display: none !important;
 }
 
+/* 桌面端：面板在页面内显示（不是弹窗），上传区是全页唯一的上传入口，必须可见 */
+@media (min-width: 901px) {
+  .filter-page .filter-upload-zone,
+  .filter-page #filterUploadZone {
+    display: flex !important;
+    visibility: visible !important;
+    height: auto !important;
+    padding: 2rem 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    border: 2px dashed var(--orange-border) !important;
+    border-radius: var(--radius-lg) !important;
+    overflow: visible !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    cursor: pointer;
+  }
+
+  .filter-page .filter-upload-content,
+  .filter-page .filter-upload-preview {
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+  }
+
+  /* 已上传后收起上传区，改用下方「重新上传」按钮
+     （前面的恢复规则用了 #id 选择器，这里必须同样带 #id 才能盖过它） */
+  .filter-page #filterUploadZone.upload-hidden {
+    display: none !important;
+  }
+}
+
 /* 移动端底部弹窗面板 */
 /* 完全镜像 ticket-panel 的底部弹窗写法（style.css 中已验证可用） */
 /* 面板移到 body 下时，通过 .sheet-open 控制显示 */
