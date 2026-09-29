@@ -476,10 +476,12 @@ body > .filter-panel .filter-upload-zone.upload-hidden {
   display: none !important;
 }
 
-/* 桌面端：面板在页面内显示（不是弹窗），上传区是全页唯一的上传入口，必须可见 */
+/* 桌面端：面板在页面内显示（不是弹窗），上传区是全页唯一的上传入口，必须可见。
+   注意：必须用 #page-filter.active 限定——visibility:visible !important 若无条件生效，
+   会覆盖 .page-section 的整页隐藏，导致上传框透出到滤镜页之后的所有页面 */
 @media (min-width: 901px) {
-  .filter-page .filter-upload-zone,
-  .filter-page #filterUploadZone {
+  #page-filter.active .filter-upload-zone,
+  #page-filter.active #filterUploadZone {
     display: flex !important;
     visibility: visible !important;
     height: auto !important;
@@ -502,8 +504,8 @@ body > .filter-panel .filter-upload-zone.upload-hidden {
   }
 
   /* 已上传后收起上传区，改用下方「重新上传」按钮
-     （前面的恢复规则用了 #id 选择器，这里必须同样带 #id 才能盖过它） */
-  .filter-page #filterUploadZone.upload-hidden {
+     （带 .upload-hidden 的这条在恢复规则之后，同优先级下后者生效） */
+  #page-filter.active #filterUploadZone.upload-hidden {
     display: none !important;
   }
 }
