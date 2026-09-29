@@ -4468,3 +4468,117 @@ html {
     color-scheme: dark;
   }
 }
+
+/* 汉堡菜单导航：所有页面入口收进汉堡，悬浮展开 */
+.nav-burger {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.burger-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid rgba(184, 168, 152, 0.35);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.burger-btn span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+  transition: background 0.2s ease;
+}
+
+.nav-burger:hover .burger-btn,
+.nav-burger.menu-open .burger-btn {
+  border-color: var(--orange);
+}
+
+.nav-burger:hover .burger-btn span,
+.nav-burger.menu-open .burger-btn span {
+  background: var(--orange);
+}
+
+/* 菜单挂在 body 下用 fixed 定位：navbar 有 backdrop-filter、body 是滚动容器，
+   放在 navbar 内会被裁剪，故显隐改由 JS 加 .open 控制 */
+.burger-menu {
+  position: fixed;
+  top: 62px;
+  right: 1.5rem;
+  min-width: 168px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 6px;
+  background: rgba(253, 248, 244, 0.98);
+  border: 1px solid rgba(184, 168, 152, 0.28);
+  border-radius: 14px;
+  box-shadow: 0 14px 44px rgba(60, 40, 20, 0.14);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  z-index: 1200;
+}
+
+.burger-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.burger-menu .nav-links {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+.burger-menu .nav-link {
+  display: block;
+  padding: 9px 14px;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.burger-menu .nav-link:hover {
+  background: rgba(196, 104, 58, 0.08);
+  color: var(--orange);
+}
+
+.burger-menu .nav-link.active {
+  background: rgba(196, 104, 58, 0.12);
+  color: var(--orange);
+}
+
+/* 下拉菜单内的液态玻璃 pill 不再需要（active 用背景高亮） */
+.burger-menu .nav-pill {
+  display: none !important;
+}
+
+/* 移动端：菜单全宽 */
+@media (max-width: 768px) {
+  .burger-menu {
+    top: 60px;
+    right: 0.8rem;
+    left: 0.8rem;
+    min-width: 0;
+  }
+}

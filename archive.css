@@ -1,0 +1,390 @@
+/*
+ * PrismDen 棱镜降噪图像处理系统 V1.0
+ * 档案库样式表：图片卡片网格、弹窗与拖拽提示样式
+ * 著作权人：Young__Yang
+ * 完成日期：2026-09-28
+ * 权利取得方式：原始取得  权利范围：全部权利
+ */
+
+.archive-main {
+  max-width: 1200px;
+}
+.archive-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.archive-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+.archive-subtitle {
+  font-size: 0.875rem;
+  color: var(--ink-faded);
+  font-weight: 300;
+}
+.archive-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.archive-storage {
+  font-size: 0.75rem;
+  color: var(--stone);
+}
+.archive-danger {
+  color: #a33a2a;
+}
+.archive-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.archive-search {
+  flex: 1 1 180px;
+  min-width: 150px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--warm-white);
+  border: 1px solid var(--orange-border);
+  border-radius: var(--radius-md, 8px);
+  outline: none;
+}
+.archive-search:focus {
+  border-color: var(--orange);
+}
+.archive-tabs {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--orange-ghost);
+  border-radius: 100px;
+}
+.archive-tab {
+  position: relative;
+  z-index: 1;
+  padding: 0.42rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--ink-faded);
+  background: none;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.archive-tab.active {
+  color: var(--ink);
+  font-weight: 500;
+}
+.archive-tab-pill {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: 0;
+  background: var(--warm-white);
+  border-radius: 100px;
+  pointer-events: none;
+}
+.archive-fav-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: var(--stone);
+  background: none;
+  border: 1px solid var(--orange-border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.archive-fav-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+.archive-fav-toggle.active {
+  color: var(--orange);
+  border-color: var(--orange);
+  background: var(--orange-ghost);
+}
+.archive-sort {
+  padding: 0.45rem 0.7rem;
+  font-size: 0.8rem;
+  color: var(--ink);
+  background: var(--warm-white);
+  border: 1px solid var(--orange-border);
+  border-radius: var(--radius-md, 8px);
+  outline: none;
+  cursor: pointer;
+}
+.archive-empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--stone);
+}
+.archive-empty.show {
+  display: flex;
+}
+.archive-empty-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink-faded);
+  margin-top: 0.8rem;
+}
+.archive-empty-hint {
+  font-size: 0.82rem;
+  color: var(--stone);
+  max-width: 420px;
+  line-height: 1.7;
+}
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.1rem;
+}
+.archive-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--warm-white);
+  border: 1px solid var(--orange-border);
+  border-radius: var(--radius-lg, 14px);
+  cursor: pointer;
+}
+.archive-card-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  background: var(--orange-ghost);
+}
+.archive-card-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+}
+.archive-card-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.archive-card-src {
+  flex-shrink: 0;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--orange);
+  background: var(--orange-ghost);
+  border-radius: 100px;
+}
+.archive-card-fav {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: #fff;
+  background: rgba(196,104,58,0.9);
+  border-radius: 50%;
+}
+.archive-card.is-fav .archive-card-fav {
+  display: flex;
+}
+.archive-card-fav svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+.archive-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(30,20,12,0.55);
+}
+.archive-modal-backdrop.show {
+  display: flex;
+}
+.archive-modal {
+  display: flex;
+  position: relative;
+  width: min(920px, 100%);
+  max-height: 86vh;
+  overflow: hidden;
+  background: var(--warm-white);
+  border-radius: 18px;
+}
+.archive-modal-img-wrap {
+  flex: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  background: var(--orange-ghost);
+}
+.archive-modal-img-wrap img {
+  max-width: 100%;
+  max-height: 86vh;
+  object-fit: contain;
+  display: block;
+}
+.archive-modal-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 240px;
+  max-width: 320px;
+  padding: 1.8rem 1.5rem;
+  overflow-y: auto;
+}
+.archive-modal-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  word-break: break-all;
+}
+.archive-modal-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.archive-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  font-size: 0.8rem;
+}
+.archive-meta-row span {
+  color: var(--stone);
+  flex-shrink: 0;
+}
+.archive-meta-row em {
+  font-style: normal;
+  color: var(--ink);
+  text-align: right;
+  word-break: break-all;
+}
+.archive-modal-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.archive-modal-tags label {
+  font-size: 0.78rem;
+  color: var(--stone);
+}
+.archive-modal-tags input {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: var(--warm-white);
+  border: 1px solid var(--orange-border);
+  border-radius: var(--radius-md, 8px);
+  outline: none;
+}
+.archive-modal-tags input:focus {
+  border-color: var(--orange);
+}
+.archive-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.archive-modal-actions .btn {
+  flex: 1;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.archive-modal-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.8rem;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink-faded);
+  background: var(--warm-white);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.archive-drop-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--orange);
+  background: rgba(196,104,58,0.08);
+  border: 3px dashed var(--orange);
+  pointer-events: none;
+}
+.archive-drop-hint.show {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+.archive-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+.archive-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.8rem;
+  }
+.archive-modal {
+    flex-direction: column;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+.archive-modal-img-wrap {
+    flex: none;
+    max-height: 42vh;
+  }
+.archive-modal-img-wrap img {
+    max-height: 42vh;
+  }
+.archive-modal-side {
+    max-width: none;
+    padding: 1.2rem 1.1rem;
+  }
+.archive-tab {
+    padding: 0.38rem 0.65rem;
+    font-size: 0.74rem;
+  }
+}

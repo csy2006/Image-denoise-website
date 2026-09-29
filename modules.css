@@ -1,0 +1,508 @@
+/*
+ * PrismDen 棱镜降噪图像处理系统 V1.0
+ * 功能模块样式表：批量处理、图像编辑、处理日志三模块界面样式
+ * 著作权人：Young__Yang
+ * 完成日期：2026-09-28
+ * 权利取得方式：原始取得  权利范围：全部权利
+ */
+
+.mod-main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.6rem 1.2rem 3rem;
+}
+.mod-title {
+  font-family: var(--font-display, serif);
+  font-size: 1.7rem;
+  font-weight: 300;
+  color: var(--ink);
+  margin: 0 0 0.35rem;
+}
+.mod-sub {
+  color: var(--ink-faded);
+  font-size: 0.92rem;
+  margin: 0 0 1.4rem;
+  line-height: 1.6;
+}
+.mod-card {
+  background: var(--warm-white, #fffaf5);
+  border: 1px solid var(--orange-border, rgba(184, 168, 152, 0.22));
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 1.1rem;
+}
+.mod-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1.2rem;
+  align-items: flex-end;
+}
+.mod-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.mod-field label {
+  font-size: 0.78rem;
+  color: var(--stone, #8c7a68);
+}
+.mod-field input[type="range"] {
+  width: 150px;
+  accent-color: var(--orange, #c4683a);
+}
+.mod-field select,
+.mod-field input[type="number"] {
+  padding: 0.42rem 0.6rem;
+  border: 1px solid var(--orange-border, rgba(184, 168, 152, 0.35));
+  border-radius: 8px;
+  background: var(--warm-white, #fffaf5);
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+.mod-val {
+  font-variant-numeric: tabular-nums;
+  color: var(--orange, #c4683a);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.mod-btn {
+  padding: 0.5rem 1.1rem;
+  border-radius: 9px;
+  border: 1px solid var(--orange-border, rgba(184, 168, 152, 0.35));
+  background: var(--warm-white, #fffaf5);
+  color: var(--ink);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.mod-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.mod-btn.primary {
+  background: var(--orange, #c4683a);
+  border-color: var(--orange, #c4683a);
+  color: #fff;
+}
+.mod-empty {
+  text-align: center;
+  color: var(--ink-faded);
+  font-size: 0.92rem;
+  padding: 2.4rem 1rem;
+}
+.batch-zone {
+  border: 2px dashed var(--orange-border, rgba(184, 168, 152, 0.45));
+  border-radius: 14px;
+  padding: 1.6rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  color: var(--ink-faded);
+  font-size: 0.92rem;
+  background: var(--warm-white, #fffaf5);
+}
+.batch-zone.drag-over {
+  border-color: var(--orange, #c4683a);
+  color: var(--orange, #c4683a);
+  background: rgba(196, 104, 58, 0.05);
+}
+.batch-overall {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(184, 168, 152, 0.18);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.batch-overall-fill {
+  height: 100%;
+  width: 0;
+  background: var(--orange, #c4683a);
+}
+.batch-queue-info {
+  min-height: 1.1rem;
+  font-size: 0.8rem;
+  color: var(--orange, #c4683a);
+  margin-bottom: 0.6rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.batch-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+.batch-stat,
+.log-stat {
+  flex: 1 1 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.7rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(184, 168, 152, 0.08);
+  font-size: 0.75rem;
+  color: var(--stone, #8c7a68);
+}
+.batch-stat-num,
+.log-stat-num {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.batch-stat.ok .batch-stat-num,
+.log-stat.ok .log-stat-num {
+  color: #2e7d52;
+}
+.batch-stat.err .batch-stat-num,
+.log-stat.err .log-stat-num {
+  color: #c0392b;
+}
+.batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.batch-task {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--orange-border, rgba(184, 168, 152, 0.22));
+  background: var(--warm-white, #fffaf5);
+}
+.batch-task.status-running {
+  border-color: var(--orange, #c4683a);
+}
+.batch-task.status-error {
+  border-color: rgba(192, 57, 43, 0.5);
+}
+.batch-task-thumb {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(184, 168, 152, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.batch-task-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.batch-task-thumb-ph {
+  font-size: 0.72rem;
+  color: var(--stone, #8c7a68);
+}
+.batch-task-body {
+  flex: 1;
+  min-width: 0;
+}
+.batch-task-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.batch-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+  font-size: 0.74rem;
+  color: var(--stone, #8c7a68);
+  margin-bottom: 0.35rem;
+}
+.batch-task-err {
+  color: #c0392b;
+}
+.batch-task-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(184, 168, 152, 0.18);
+  overflow: hidden;
+}
+.batch-task-bar-fill {
+  height: 100%;
+  width: 0;
+  background: var(--orange, #c4683a);
+}
+.batch-task-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+.batch-btn-mini {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.74rem;
+  border-radius: 7px;
+  border: 1px solid var(--orange-border, rgba(184, 168, 152, 0.35));
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.batch-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.editor-zone {
+  border: 2px dashed var(--orange-border, rgba(184, 168, 152, 0.45));
+  border-radius: 14px;
+  padding: 2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  color: var(--ink-faded);
+}
+.editor-zone.drag-over {
+  border-color: var(--orange, #c4683a);
+  color: var(--orange, #c4683a);
+  background: rgba(196, 104, 58, 0.05);
+}
+.editor-layout {
+  display: flex;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+.editor-stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: rgba(184, 168, 152, 0.08);
+  border-radius: 12px;
+  padding: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#editorCanvas {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  cursor: crosshair;
+}
+.editor-panel {
+  flex: 0 0 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.editor-group {
+  border-top: 1px solid var(--orange-border, rgba(184, 168, 152, 0.22));
+  padding-top: 0.7rem;
+}
+.editor-group-title {
+  font-size: 0.76rem;
+  color: var(--stone, #8c7a68);
+  margin-bottom: 0.5rem;
+}
+.editor-slider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+.editor-slider-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--orange, #c4683a);
+}
+.editor-info {
+  font-size: 0.76rem;
+  color: var(--stone, #8c7a68);
+  text-align: center;
+  padding-top: 0.3rem;
+}
+.log-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.log-tabs {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+.log-tab {
+  padding: 0.34rem 0.7rem;
+  font-size: 0.78rem;
+  border-radius: 20px;
+  border: 1px solid var(--orange-border, rgba(184, 168, 152, 0.32));
+  background: transparent;
+  color: var(--ink-faded);
+  cursor: pointer;
+}
+.log-tab.active {
+  background: var(--orange, #c4683a);
+  border-color: var(--orange, #c4683a);
+  color: #fff;
+}
+.log-search {
+  flex: 1 1 180px;
+  min-width: 150px;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--orange-border, rgba(184, 168, 152, 0.32));
+  border-radius: 9px;
+  background: var(--warm-white, #fffaf5);
+  color: var(--ink);
+  font-size: 0.86rem;
+}
+.log-stats {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.log-stat-num i {
+  font-size: 0.7rem;
+  font-style: normal;
+  opacity: 0.6;
+  margin-left: 1px;
+}
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.log-item {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  border-radius: 11px;
+  border: 1px solid var(--orange-border, rgba(184, 168, 152, 0.22));
+  background: var(--warm-white, #fffaf5);
+}
+.log-item.status-error {
+  border-color: rgba(192, 57, 43, 0.4);
+}
+.log-thumb {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: rgba(184, 168, 152, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.log-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.log-thumb-ph {
+  font-size: 0.66rem;
+  color: var(--stone, #8c7a68);
+}
+.log-main {
+  flex: 1;
+  min-width: 0;
+}
+.log-line1 {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+.log-type {
+  font-size: 0.7rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 5px;
+  background: rgba(196, 104, 58, 0.12);
+  color: var(--orange, #c4683a);
+  flex-shrink: 0;
+}
+.log-name {
+  font-size: 0.86rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.log-status {
+  font-size: 0.7rem;
+  color: #2e7d52;
+  flex-shrink: 0;
+}
+.log-item.status-error .log-status {
+  color: #c0392b;
+}
+.log-line2 {
+  display: flex;
+  gap: 0.7rem;
+  font-size: 0.72rem;
+  color: var(--stone, #8c7a68);
+  margin-bottom: 0.15rem;
+  flex-wrap: wrap;
+}
+.log-line3 {
+  font-size: 0.72rem;
+  color: var(--ink-faded);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.log-err {
+  color: #c0392b;
+}
+.log-del {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--stone, #8c7a68);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+.editor-layout {
+    flex-direction: column;
+  }
+.editor-panel {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+.mod-main {
+    padding: 1.2rem 0.9rem 2.5rem;
+  }
+.mod-title {
+    font-size: 1.45rem;
+  }
+.batch-task {
+    flex-wrap: wrap;
+  }
+.batch-task-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+.mod-field input[type="range"] {
+    width: 120px;
+  }
+.log-line3 {
+    white-space: normal;
+  }
+}

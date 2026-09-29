@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="ticket.css" />
   <link rel="stylesheet" href="profile.css" />
   <link rel="stylesheet" href="palette.css" />
+  <link rel="stylesheet" href="modules.css" />
+  <link rel="stylesheet" href="archive.css" />
   <link rel="icon" href="./002.jpg" type="image/x-icon">
   <script>
     (function() {
@@ -64,16 +66,10 @@
       <span class="nav-title"><a href="#" onclick="switchPage('home'); return false;"><em data-i18n="brandTag">PrismDen -- Young__Yang</em></a></span>
     </div>
   </div>
-  <div class="nav-links" id="navLinks">
-    <span class="nav-link active" data-page="home" data-i18n="navHome">首页</span>
-    <span class="nav-link" data-page="features" data-i18n="navFeatures">核心特性</span>
-    <span class="nav-link" data-page="guide" data-i18n="navGuide">参数指南</span>
-    <span class="nav-link" data-page="upload" data-i18n="navUpload">图像降噪</span>
-    <span class="nav-link" data-page="result" data-i18n="navResult">降噪结果</span>
-    <span class="nav-link" data-page="ticket" data-i18n="navTicket">旅行票根</span>
-    <span class="nav-link" data-page="filter" data-i18n="navFilter">创意滤镜</span>
-    <span class="nav-link" data-page="palette" data-i18n="navPalette">色卡</span>
-    <span class="nav-link" data-page="profile" data-i18n="navProfile">设置中心</span>
+  <div class="nav-burger" id="navBurger">
+    <button class="burger-btn" id="burgerBtn" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
   </div>
   <!-- <div class="nav-right">
     <div class="nav-status" id="statusBar">
@@ -95,6 +91,25 @@
     </button>
   </div> -->
 </nav>
+
+<!-- 汉堡下拉菜单放在 navbar 之外：body 因页面全绝对定位塌缩为滚动容器，会裁剪 navbar 内的下拉 -->
+<div class="burger-menu" id="burgerMenu">
+  <div class="nav-links" id="navLinks">
+    <span class="nav-link active" data-page="home" data-i18n="navHome">首页</span>
+    <span class="nav-link" data-page="features" data-i18n="navFeatures">核心特性</span>
+    <span class="nav-link" data-page="guide" data-i18n="navGuide">参数指南</span>
+    <span class="nav-link" data-page="upload" data-i18n="navUpload">图像降噪</span>
+    <span class="nav-link" data-page="result" data-i18n="navResult">降噪结果</span>
+    <span class="nav-link" data-page="ticket" data-i18n="navTicket">旅行票根</span>
+    <span class="nav-link" data-page="filter" data-i18n="navFilter">创意滤镜</span>
+    <span class="nav-link" data-page="palette" data-i18n="navPalette">色卡</span>
+    <span class="nav-link" data-page="profile" data-i18n="navProfile">设置中心</span>
+    <span class="nav-link" data-page="batch" data-i18n="navBatch">批量处理</span>
+    <span class="nav-link" data-page="editor" data-i18n="navEditor">图像编辑</span>
+    <span class="nav-link" data-page="history" data-i18n="navHistory">处理日志</span>
+    <span class="nav-link" data-page="archive" data-i18n="navArchive">档案库</span>
+  </div>
+</div>
 
 <!-- 1: 首页 -->
 <section class="page-section active" id="page-home" data-page="home">
@@ -974,6 +989,325 @@
 
 </section>
 
+<!-- 新模块: batch -->
+<section class="page-section" id="page-batch" data-page="batch">
+  <div class="page-main">
+  <main class="mod-main">
+    <h2 class="mod-title">批量处理</h2>
+    <p class="mod-sub">一次导入多张图片排队降噪，可随时暂停、取消、重试失败项，完成后打包下载。大图会自动分块处理。</p>
+
+    <div class="mod-card">
+      <div class="batch-zone" id="batchZone">
+        <span>点击或拖拽图片到此处导入（支持多选）</span>
+        <input type="file" id="batchFileInput" accept="image/*" multiple hidden />
+      </div>
+    </div>
+
+    <div class="mod-card">
+      <div class="mod-row">
+        <div class="mod-field">
+          <label><span>空间半径 σₛ</span> <span class="mod-val" id="batchSigmaSVal">5</span></label>
+          <input type="range" id="batchSigmaS" min="1" max="15" value="5" />
+        </div>
+        <div class="mod-field">
+          <label><span>颜色阈值 σᵣ</span> <span class="mod-val" id="batchSigmaRVal">25</span></label>
+          <input type="range" id="batchSigmaR" min="1" max="100" value="25" />
+        </div>
+        <div class="mod-field">
+          <label>降噪模式</label>
+          <div style="display:flex; gap:0.8rem;">
+            <label class="batch-radio"><input type="radio" name="batchMode" value="bilateral" checked /> <span>彩色</span></label>
+            <label class="batch-radio"><input type="radio" name="batchMode" value="grayscale" /> <span>灰度</span></label>
+          </div>
+        </div>
+        <div class="mod-field">
+          <label>输出格式</label>
+          <select id="batchFormat">
+            <option value="png">PNG（无损）</option>
+            <option value="jpeg">JPEG（体积小）</option>
+            <option value="webp">WebP</option>
+          </select>
+        </div>
+        <div class="mod-field hidden" id="batchQualityRow">
+          <label><span>输出质量</span> <span class="mod-val" id="batchQualityVal">92</span></label>
+          <input type="range" id="batchQuality" min="50" max="100" value="92" />
+        </div>
+        <div class="mod-field">
+          <label>单张像素上限</label>
+          <select id="batchMaxPixels">
+            <option value="4000000" selected>400 万（推荐，约 5 秒/张）</option>
+            <option value="8000000">800 万（约 11 秒/张）</option>
+            <option value="12000000">1200 万（约 16 秒/张）</option>
+            <option value="0">不限制（大图会很慢）</option>
+          </select>
+        </div>
+        <div class="mod-field">
+          <label>单张超时</label>
+          <select id="batchTimeout">
+            <option value="30">30 秒</option>
+            <option value="60" selected>60 秒</option>
+            <option value="180">180 秒</option>
+            <option value="0">不限制</option>
+          </select>
+        </div>
+        <div class="mod-field">
+          <label class="batch-radio" style="padding-bottom:0.5rem;">
+            <input type="checkbox" id="batchSaveArchive" /> <span>完成后自动存入档案库</span>
+          </label>
+        </div>
+      </div>
+      <p style="margin:0.7rem 0 0; font-size:0.76rem; color:var(--stone); line-height:1.6;">
+        超过像素上限的图片会先等比缩小再降噪，避免单张耗时过久；超时未完成的会自动跳过并标记为失败，不拖住后面的图片。
+      </p>
+    </div>
+
+    <div class="batch-overall"><div class="batch-overall-fill" id="batchOverallBar"></div></div>
+    <div class="batch-queue-info" id="batchQueueInfo"></div>
+
+    <div class="batch-summary" id="batchSummary"></div>
+
+    <div class="mod-card">
+      <div class="mod-row" style="margin-bottom:1rem;">
+        <button class="mod-btn primary" id="batchStartBtn">开始处理</button>
+        <button class="mod-btn" id="batchPauseBtn">暂停</button>
+        <button class="mod-btn danger" id="batchCancelBtn">取消</button>
+        <button class="mod-btn" id="batchPickBtn">继续添加</button>
+        <button class="mod-btn" id="batchPackBtn">打包下载全部</button>
+        <button class="mod-btn danger" id="batchClearBtn">清理已完成</button>
+      </div>
+
+      <div class="batch-list" id="batchList"></div>
+      <div class="mod-empty hidden" id="batchEmpty">还没有任务，先导入几张图片吧</div>
+    </div>
+  </main>
+  </div>
+</section>
+
+<!-- 新模块: editor -->
+<section class="page-section" id="page-editor" data-page="editor">
+  <div class="page-main">
+  <main class="mod-main">
+    <h2 class="mod-title">图像编辑</h2>
+    <p class="mod-sub">裁剪、旋转翻转、亮度对比度饱和度调整与锐化，实时预览，可导出或存入档案库。在预览图上点击可移动裁剪框中心。</p>
+
+    <div class="editor-zone" id="editorZone">
+      <span>点击或拖拽图片到此处开始编辑</span>
+      <input type="file" id="editorFileInput" accept="image/*" hidden />
+    </div>
+
+    <div class="editor-layout hidden" id="editorStageWrap" style="margin-top:1.2rem;">
+      <div class="editor-stage" id="editorStage">
+        <canvas id="editorCanvas"></canvas>
+      </div>
+
+      <div class="editor-panel hidden" id="editorPanel">
+        <div class="mod-card" style="margin:0;">
+          <div class="editor-group" style="border-top:none; padding-top:0;">
+            <div class="editor-group-title">裁剪</div>
+            <div class="editor-slider-row">
+              <span>比例</span>
+              <select id="editorCropRatio">
+                <option value="origin">原图比例</option>
+                <option value="1:1">1:1 方形</option>
+                <option value="4:3">4:3</option>
+                <option value="3:2">3:2</option>
+                <option value="16:9">16:9</option>
+              </select>
+            </div>
+            <div class="editor-slider-row">
+              <span>取景</span>
+              <input type="range" id="editorCropScale" min="30" max="100" value="100" />
+              <span class="mod-val" id="editorCropScaleVal">100%</span>
+            </div>
+          </div>
+
+          <div class="editor-group">
+            <div class="editor-group-title">旋转与翻转</div>
+            <div class="editor-slider-row">
+              <span>角度</span>
+              <select id="editorRotate">
+                <option value="0">0°</option>
+                <option value="90">90°</option>
+                <option value="180">180°</option>
+                <option value="270">270°</option>
+              </select>
+            </div>
+            <div class="mod-row">
+              <button class="mod-btn" id="editorFlipH">水平翻转</button>
+              <button class="mod-btn" id="editorFlipV">垂直翻转</button>
+            </div>
+          </div>
+
+          <div class="editor-group">
+            <div class="editor-group-title">色彩调整</div>
+            <div class="editor-slider-row">
+              <span>亮度</span>
+              <input type="range" id="editorBrightness" min="-100" max="100" value="0" />
+              <span class="mod-val" id="editorBrightnessVal">0</span>
+            </div>
+            <div class="editor-slider-row">
+              <span>对比</span>
+              <input type="range" id="editorContrast" min="-100" max="100" value="0" />
+              <span class="mod-val" id="editorContrastVal">0</span>
+            </div>
+            <div class="editor-slider-row">
+              <span>饱和</span>
+              <input type="range" id="editorSaturation" min="-100" max="100" value="0" />
+              <span class="mod-val" id="editorSaturationVal">0</span>
+            </div>
+            <div class="editor-slider-row">
+              <span>锐化</span>
+              <input type="range" id="editorSharpen" min="0" max="100" value="0" />
+              <span class="mod-val" id="editorSharpenVal">0</span>
+            </div>
+          </div>
+
+          <div class="editor-group">
+            <div class="editor-group-title">预设风格</div>
+            <select id="editorPreset" style="width:100%;">
+              <option value="none">不使用</option>
+              <option value="vivid">鲜艳</option>
+              <option value="mono">黑白</option>
+              <option value="retro">复古</option>
+            </select>
+          </div>
+
+          <div class="editor-group">
+            <div class="editor-group-title">输出</div>
+            <select id="editorFormat" style="width:100%; margin-bottom:0.6rem;">
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+              <option value="webp">WebP</option>
+            </select>
+            <div class="mod-row">
+              <button class="mod-btn primary" id="editorDownloadBtn">导出图片</button>
+              <button class="mod-btn" id="editorArchiveBtn">存档案库</button>
+              <button class="mod-btn" id="editorPickBtn">更换图片</button>
+              <button class="mod-btn danger" id="editorResetBtn">重置参数</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-info" id="editorInfo"></div>
+    <div style="display:none;" id="editorFileName"></div>
+  </main>
+  </div>
+</section>
+
+<!-- 新模块: history -->
+<section class="page-section" id="page-history" data-page="history">
+  <div class="page-main">
+  <main class="mod-main">
+    <h2 class="mod-title">处理日志</h2>
+    <p class="mod-sub">自动记录每一次处理的时间、参数与耗时，可筛选、搜索、导出 CSV，便于回溯与统计。</p>
+
+    <div class="log-stats" id="logStats"></div>
+
+    <div class="log-toolbar">
+      <div class="log-tabs" id="logTypeTabs">
+        <button class="log-tab active" data-value="all">全部类型</button>
+        <button class="log-tab" data-value="denoise">图像降噪</button>
+        <button class="log-tab" data-value="batch">批量处理</button>
+        <button class="log-tab" data-value="edit">图像编辑</button>
+        <button class="log-tab" data-value="import">图片导入</button>
+      </div>
+      <div class="log-tabs" id="logStatusTabs">
+        <button class="log-tab active" data-value="all">全部状态</button>
+        <button class="log-tab" data-value="success">成功</button>
+        <button class="log-tab" data-value="error">失败</button>
+      </div>
+      <input type="text" class="log-search" id="logSearch" placeholder="搜索文件名或参数…" />
+      <button class="mod-btn" id="logRefreshBtn">刷新</button>
+      <button class="mod-btn primary" id="logExportBtn">导出 CSV</button>
+      <button class="mod-btn danger" id="logClearBtn">清空</button>
+    </div>
+
+    <div class="log-list" id="logList"></div>
+    <div class="mod-empty hidden" id="logEmpty">暂无处理记录，去处理一张图片试试</div>
+  </main>
+  </div>
+</section>
+
+<!-- 新模块: archive -->
+<section class="page-section" id="page-archive" data-page="archive">
+  <div class="page-main">
+  <main class="page-main archive-main">
+
+    <div class="archive-header">
+      <div>
+        <h2 class="archive-title">图片档案库</h2>
+        <p class="archive-subtitle">管理你处理过的所有图片，全部保存在本机浏览器中</p>
+      </div>
+      <div class="archive-header-actions">
+        <span class="archive-storage" id="archiveStorage"></span>
+        <button class="btn btn-ghost" id="archiveImportBtn">导入图片</button>
+        <button class="btn btn-ghost archive-danger" id="archiveClearBtn">清空档案库</button>
+        <input type="file" id="archiveFileInput" accept="image/*" multiple hidden />
+      </div>
+    </div>
+
+    <div class="archive-toolbar glass-card">
+      <input type="text" class="archive-search" id="archiveSearch" placeholder="搜索文件名…" />
+      <div class="archive-tabs" id="archiveSourceTabs">
+        <button class="archive-tab active" data-source="all">全部</button>
+        <button class="archive-tab" data-source="denoise">降噪</button>
+        <button class="archive-tab" data-source="filter">滤镜</button>
+        <button class="archive-tab" data-source="import">导入</button>
+        <div class="archive-tab-pill" id="archiveTabPill"></div>
+      </div>
+      <button class="archive-fav-toggle" id="archiveFavToggle" title="只看收藏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+      </button>
+      <select class="archive-sort" id="archiveSort">
+        <option value="time">按时间</option>
+        <option value="name">按名称</option>
+        <option value="size">按大小</option>
+      </select>
+    </div>
+
+    <div class="archive-empty glass-card" id="archiveEmpty">
+      <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <p class="archive-empty-title">暂无归档图片</p>
+      <p class="archive-empty-hint">在降噪结果页或滤镜页点击「存入档案库」，或在此导入本地图片</p>
+    </div>
+
+    <div class="archive-grid" id="archiveGrid"></div>
+
+  </main>
+
+  <div class="archive-modal-backdrop" id="archiveModalBackdrop">
+    <div class="archive-modal" id="archiveModal">
+      <button class="archive-modal-close" id="archiveModalClose" aria-label="关闭">&times;</button>
+      <div class="archive-modal-img-wrap"><img id="archiveModalImg" alt="preview" /></div>
+      <div class="archive-modal-side">
+        <h3 class="archive-modal-name" id="archiveModalName">--</h3>
+        <div class="archive-modal-meta">
+          <div class="archive-meta-row"><span>来源</span><em id="archiveModalSource">--</em></div>
+          <div class="archive-meta-row"><span>尺寸</span><em id="archiveModalDims">--</em></div>
+          <div class="archive-meta-row"><span>大小</span><em id="archiveModalBytes">--</em></div>
+          <div class="archive-meta-row"><span>归档时间</span><em id="archiveModalDate">--</em></div>
+        </div>
+        <div class="archive-modal-tags">
+          <label>标签</label>
+        <input type="text" id="archiveModalTags" placeholder="用逗号分隔" />
+        </div>
+        <div class="archive-modal-actions">
+          <button class="btn btn-primary" id="archiveModalDownload">下载</button>
+          <button class="btn btn-ghost" id="archiveModalFav">收藏</button>
+          <button class="btn btn-ghost archive-danger" id="archiveModalDelete">删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="archive-drop-hint" id="archiveDropHint">松开鼠标，导入图片</div>
+  </div>
+</section>
+
 <!-- 底部版权（固定底部，不撑开高度） -->
 <div class="site-footer" data-i18n="footer">© 2026 Young__Yang. All rights reserved.</div>
 
@@ -1001,5 +1335,9 @@
 <script src="filter.js"></script>
 <script src="profile.js"></script>
 <script src="palette.js"></script>
+<script src="history.js"></script>
+<script src="batch.js"></script>
+<script src="editor.js"></script>
+<script src="archive.js"></script>
 </body>
 </html>

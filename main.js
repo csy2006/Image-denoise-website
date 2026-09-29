@@ -162,6 +162,109 @@ function getDenoiseWorker() {
   return _denoiseWorker;
 }
 
+
+async function denoiseCanvas(srcCanvas, opts) {
+  opts = opts || {};
+  const sigmaS = opts.sigmaS;
+  const sigmaR = opts.sigmaR;
+  const mode = opts.mode || 'bilateral';
+  const onProgress = opts.onProgress || function () {};
+
+  const dw = srcCanvas.width;
+  const dh = srcCanvas.height;
+  const srcCtx = srcCanvas.getContext('2d');
+
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = dw;
+  outCanvas.height = dh;
+  const outCtx = outCanvas.getContext('2d');
+
+  const TILE = 1800;
+  const OVERLAP = 32;
+  const tilesX = Math.ceil(dw / TILE);
+  const tilesY = Math.ceil(dh / TILE);
+  const totalTiles = tilesX * tilesY;
+
+  let elapsedAcc = 0;
+
+  for (let ty = 0; ty < tilesY; ty++) {
+    for (let tx = 0; tx < tilesX; tx++) {
+      const sx = Math.max(0, tx * TILE - OVERLAP);
+      const sy = Math.max(0, ty * TILE - OVERLAP);
+      const sw = Math.min(TILE + 2 * OVERLAP, dw - sx);
+      const sh = Math.min(TILE + 2 * OVERLAP, dh - sy);
+      const tileData = srcCtx.getImageData(sx, sy, sw, sh);
+
+      const msgId = ++_denoiseMsgId;
+      const worker = getDenoiseWorker();
+
+      const { pixels, elapsed } = await new Promise((resolve, reject) => {
+        worker.onmessage = function (e) {
+          const { id, type, pixels, elapsed, message } = e.data;
+          if (id !== msgId) return;
+          if (type === 'error') { reject(new Error(message)); return; }
+          if (type === 'done') resolve({ pixels, elapsed: elapsed || 0 });
+        };
+        worker.onerror = () => reject(new Error('Worker 错误'));
+
+        const buffer = tileData.data.buffer.slice(0);
+        worker.postMessage({
+          id: msgId,
+          pixels: new Uint8ClampedArray(buffer),
+          width: sw, height: sh,
+          sigmaS, sigmaR, mode
+        }, [buffer]);
+      });
+
+      elapsedAcc += elapsed;
+
+      const ex = tx * TILE;
+      const ey = ty * TILE;
+      const ew = Math.min(TILE, dw - ex);
+      const eh = Math.min(TILE, dh - ey);
+      const dx = ex - sx;
+      const dy = ey - sy;
+
+      const outData = outCtx.createImageData(ew, eh);
+      const resultArr = new Uint8ClampedArray(pixels);
+      for (let y = 0; y < eh; y++) {
+        const srcOff = ((dy + y) * sw + dx) * 4;
+        const dstOff = y * ew * 4;
+        outData.data.set(resultArr.subarray(srcOff, srcOff + ew * 4), dstOff);
+      }
+      outCtx.putImageData(outData, ex, ey);
+
+      onProgress(ty * tilesX + tx + 1, totalTiles);
+    }
+  }
+
+  outCanvas._denoiseElapsed = Math.round(elapsedAcc);
+  return outCanvas;
+}
+
+function abortDenoise() {
+  if (_denoiseWorker) {
+    try { _denoiseWorker.terminate(); } catch (e) {  }
+    _denoiseWorker = null;
+  }
+  if (_denoiseWorkerBlobURL) {
+    try { URL.revokeObjectURL(_denoiseWorkerBlobURL); } catch (e) {  }
+    _denoiseWorkerBlobURL = null;
+  }
+
+  _denoiseMsgId++;
+}
+
+
+window.PrismDenDenoise = {
+  run: denoiseCanvas,
+  abort: abortDenoise,
+  tileInfo: function (w, h) {
+    const TILE = 1800;
+    return Math.ceil(w / TILE) * Math.ceil(h / TILE);
+  }
+};
+
 // 状态
 let currentFile = null;
 let currentFileData = null;
@@ -759,7 +862,7 @@ window.addEventListener('load', function() {
 });
 
 // 页面切换 (SPA)
-const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter', 'palette', 'profile'];
+const NAV_ORDER = ['home', 'features', 'guide', 'upload', 'result', 'ticket', 'filter', 'palette', 'profile', 'batch', 'editor', 'history', 'archive'];
 
 let _switchTimer = null;
 let _prevSection = null;
@@ -927,6 +1030,8 @@ function switchPage(page) {
   if (activeLink) updatePill(activeLink);
 
   if (page === 'result') refreshResultPage();
+  if (page === 'history' && typeof window.onHistoryPageEnter === 'function') window.onHistoryPageEnter();
+  if (page === 'archive' && typeof window.onArchivePageEnter === 'function') window.onArchivePageEnter();
 
   // 进入票根页时，恢复上传区可见性 + 彻底清除弹窗残留状态
   if (page === 'ticket') {
@@ -994,7 +1099,7 @@ function switchPage(page) {
 
   // 移动端：每次页面切换后确保面板/遮罩在 body 下
   // 防止 navigateTo → closeSheet 把面板移回 section 后，下次进入布局错乱
-  movePanelsToBodyIfMobile();
+  if (window._movePanelsToBodyIfMobile) window._movePanelsToBodyIfMobile();
 
   // 进入创意滤镜页时，确保弹窗为关闭态（只显示预览区+浮动按钮）
   if (page === 'filter') {
@@ -1024,54 +1129,62 @@ var _hasHover = window.matchMedia('(hover: hover)').matches;
 
 function initNavLinks() {
   const links = document.querySelectorAll('.nav-link');
+  const navBurger = document.getElementById('navBurger');
+  const burgerBtn = document.getElementById('burgerBtn');
+  const burgerMenu = document.getElementById('burgerMenu');
 
+  // 菜单显隐：同步 .open（菜单）与 .menu-open（按钮高亮）
+  let _menuHideTimer = null;
+  const openMenu = () => {
+    if (!burgerMenu) return;
+    if (_menuHideTimer) { clearTimeout(_menuHideTimer); _menuHideTimer = null; }
+    burgerMenu.classList.add('open');
+    if (navBurger) navBurger.classList.add('menu-open');
+  };
+  const closeMenu = (immediately) => {
+    if (!burgerMenu) return;
+    const doClose = () => {
+      burgerMenu.classList.remove('open');
+      if (navBurger) navBurger.classList.remove('menu-open');
+    };
+    if (_menuHideTimer) { clearTimeout(_menuHideTimer); _menuHideTimer = null; }
+    if (immediately) doClose();
+    else _menuHideTimer = setTimeout(doClose, 150);  // 留 150ms 让指针从按钮移到菜单
+  };
+
+  // 桌面：悬浮展开（按钮和菜单本身都算悬浮区）
+  if (_hasHover && navBurger && burgerMenu) {
+    navBurger.addEventListener('mouseenter', openMenu);
+    navBurger.addEventListener('mouseleave', () => closeMenu(false));
+    burgerMenu.addEventListener('mouseenter', openMenu);
+    burgerMenu.addEventListener('mouseleave', () => closeMenu(false));
+  }
+
+  // 触屏备用：点击按钮切换；点击菜单外收起
+  if (burgerBtn) {
+    burgerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (burgerMenu && burgerMenu.classList.contains('open')) closeMenu(true);
+      else openMenu();
+    });
+    document.addEventListener('click', (e) => {
+      if (burgerMenu && !burgerMenu.contains(e.target) && !(navBurger && navBurger.contains(e.target))) {
+        closeMenu(true);
+      }
+    });
+  }
+
+  // 点击链接才切换页面（悬浮仅用于展开菜单，不直接跳页）
   links.forEach(link => {
-    // mouseenter：立即切换，0ms delay 跟手（仅 hover 设备）
-    if (_hasHover) {
-      link.addEventListener('mouseenter', () => {
-        const page = link.dataset.page;
-        if (!page || page === currentPage) return;
-
-        // 立即取消上一次的 timer，无论之前悬停在哪个按钮上
-        if (_navHoverTimer) clearTimeout(_navHoverTimer);
-
-        // 0ms 直接切换
-        _navHoverTimer = setTimeout(() => {
-          _navHoverTimer = null;
-          switchPage(page);
-        }, 0);
-      });
-
-      // mouseleave：只取消还未执行的切换，不阻止已触发的
-      link.addEventListener('mouseleave', () => {
-        // 只有 timer 还存在（还没执行）时才取消
-        // 如果已经执行了，clearTimeout 也无害
-        if (_navHoverTimer) {
-          clearTimeout(_navHoverTimer);
-          _navHoverTimer = null;
-        }
-      });
-    }
-
-    // 点击作为触屏备用 + 桌面备用
     link.addEventListener('click', (e) => {
       const page = link.dataset.page;
-      if (!page || page === currentPage) return;
       e.preventDefault();
       if (_navHoverTimer) { clearTimeout(_navHoverTimer); _navHoverTimer = null; }
-      switchPage(page);
+      if (page && page !== currentPage) switchPage(page);
+      // 选择后收起汉堡菜单
+      closeMenu(true);
     });
   });
-
-  // 鼠标完全离开导航区域时取消待执行切换（仅 hover 设备）
-  if (_hasHover) {
-    const navLinks = document.getElementById('navLinks');
-    if (navLinks) {
-      navLinks.addEventListener('mouseleave', () => {
-        if (_navHoverTimer) { clearTimeout(_navHoverTimer); _navHoverTimer = null; }
-      });
-    }
-  }
 }
 
 // 主题指示条物理弹簧
@@ -1394,14 +1507,6 @@ function initNavPill() {
     }
     link.addEventListener('touchend', _touchShrink, { passive: true });
     link.addEventListener('touchcancel', _touchShrink, { passive: true });
-
-    link.addEventListener('click', (e) => {
-      const page = link.dataset.page;
-      if (!page || page === currentPage) return;
-      e.preventDefault();
-      if (_navHoverTimer) { clearTimeout(_navHoverTimer); _navHoverTimer = null; }
-      switchPage(page);
-    });
   });
 
   window.addEventListener('resize', () => {
